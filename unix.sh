@@ -5,6 +5,7 @@
   chmod 700 ./selfdrive/manager/build.py
   chmod 700 ./selfdrive/manager/custom_dep.py
   chmod 700 ./selfdrive/manager/manager.py
+  chmod 700 ./selfdrive/debug/clear_dtc.py
 
   sed -i -e 's/\r$//' ./*.sh
   sed -i -e 's/\r$//' ./selfdrive/*.py
@@ -14,6 +15,7 @@
   sed -i -e 's/\r$//' ./selfdrive/ui/*.h
   sed -i -e 's/\r$//' ./selfdrive/controls/*.py
   sed -i -e 's/\r$//' ./selfdrive/controls/lib/*.py
+  sed -i -e 's/\r$//' ./selfdrive/debug/*.py
   sed -i -e 's/\r$//' ./selfdrive/locationd/models/*.py
   sed -i -e 's/\r$//' ./selfdrive/manager/build.py
   sed -i -e 's/\r$//' ./selfdrive/manager/custom_dep.py
