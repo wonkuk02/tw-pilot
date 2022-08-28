@@ -286,24 +286,12 @@ static void draw_lead(UIState *s, const cereal::ModelDataV2::LeadDataV3::Reader 
     nvgText(s->vg,lead_x-x_offset,lead_y-y_offset,val,NULL);
 
     // then length distance
-    if (s->is_metric){
-      snprintf(unit, sizeof(unit), "m"); 
-      if (s->scene.lead_d_rel < 10.){
-        snprintf(val, sizeof(val), "%.1f%s", s->scene.lead_d_rel, unit);
-      }
-      else{
-        snprintf(val, sizeof(val), "%.0f%s", s->scene.lead_d_rel, unit);
-      }
+    snprintf(unit, sizeof(unit), "m"); 
+    if (s->scene.lead_d_rel < 10.){
+      snprintf(val, sizeof(val), "%.1f%s", s->scene.lead_d_rel, unit);
     }
     else{
-      snprintf(unit, sizeof(unit), "ft"); 
-      float d_ft = s->scene.lead_d_rel * 3.281;
-      if (d_ft < 10.){
-        snprintf(val, sizeof(val), "%.1f%s", d_ft, unit);
-      }
-      else{
-        snprintf(val, sizeof(val), "%.0f%s", d_ft, unit);
-      }
+      snprintf(val, sizeof(val), "%.0f%s", s->scene.lead_d_rel, unit);
     }
     nvgText(s->vg,lead_x-x_offset,lead_y+y_offset,val,NULL);
 
@@ -311,34 +299,21 @@ static void draw_lead(UIState *s, const cereal::ModelDataV2::LeadDataV3::Reader 
 
     nvgTextAlign(s->vg, NVG_ALIGN_LEFT | NVG_ALIGN_MIDDLE);
     // first abs speed
-    if (s->is_metric){
-      snprintf(unit, sizeof(unit), "kph"); 
-      float v = (s->scene.lead_v * 3.6);
-      if (v < 100.){
-        snprintf(val, sizeof(val), "%.1f", v);
-      }
-      else{
-        snprintf(val, sizeof(val), "%.0f", v);
-      }
+
+    snprintf(unit, sizeof(unit), "kph"); 
+    float v = (s->scene.lead_v * 3.6);
+    if (v < 100.){
+      snprintf(val, sizeof(val), "%.1f", v);
     }
     else{
-      snprintf(unit, sizeof(unit), "mph"); 
-      float v = (s->scene.lead_v * 2.2374144);
-      if (v < 100.){
-        snprintf(val, sizeof(val), "%.1f", v);
-      }
-      else{
-        snprintf(val, sizeof(val), "%.0f", v);
-      }
+      snprintf(val, sizeof(val), "%.0f", v);
     }
+
     nvgText(s->vg,lead_x+x_offset,lead_y-(y_offset*1.3),val,NULL);
 
     // then relative speed
-    if (s->is_metric) {
-        snprintf(val, sizeof(val), "%s%.1f", s->scene.lead_v_rel >= 0. ? "+" : "", (s->scene.lead_v_rel * 3.6));
-    } else {
-        snprintf(val, sizeof(val), "%s%.1f", s->scene.lead_v_rel >= 0. ? "+" : "", (s->scene.lead_v_rel * 2.2374144));
-    }
+
+    snprintf(val, sizeof(val), "%s%.1f", s->scene.lead_v_rel >= 0. ? "+" : "", (s->scene.lead_v_rel * 3.6));
     nvgText(s->vg,lead_x+x_offset,lead_y+(y_offset*1.4),val,NULL);
 
     nvgFontSize(s->vg, 70);

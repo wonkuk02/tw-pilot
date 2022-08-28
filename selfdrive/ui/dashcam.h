@@ -182,7 +182,7 @@ bool screen_lock_button_clicked(int touch_x, int touch_y, dashcam_element el) {
 
 bool screen_button_clicked(int touch_x, int touch_y) {
   if (touch_x >= 1360 && touch_x <= 1610) {
-    if (touch_y >= 660 && touch_y <= 840) {
+    if (touch_y >= 120 && touch_y <= 300) {
       return true;
     }
   }
@@ -270,18 +270,18 @@ static void screen_draw_button(UIState *s, int touch_x, int touch_y) {
     //  draw_lock_button(s);
     //}
 
-    int btn_w = 120;
-    int btn_h = 120;
+    int btn_w = 150;
+    int btn_h = 150;
     int btn_x = s->fb_w - btn_w - (bdr_s * 10);
-    int btn_y = s->fb_h - btn_h - 270;
+    int btn_y = s->fb_h - btn_h - 810;
     nvgBeginPath(s->vg);
     nvgRoundedRect(s->vg, btn_x, btn_y, btn_w, btn_h, 100);
     nvgStrokeColor(s->vg, nvgRGBA(255,255,255,80));
-    nvgStrokeWidth(s->vg, 6);
+    nvgStrokeWidth(s->vg, 12);
     nvgStroke(s->vg);
 
     nvgFontFace(s->vg, "sans-bold");
-    nvgFontSize(s->vg, 50);
+    nvgFontSize(s->vg, 60);
 
     if (captureState == CAPTURE_STATE_CAPTURING) {
     NVGcolor fillColor = nvgRGBA(255,0,0,150);
