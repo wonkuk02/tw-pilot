@@ -745,7 +745,7 @@ static void ui_draw_measures(UIState *s){
             val_color = color_from_thermal_status(int(scene.deviceState.getThermalStatus()));
             snprintf(val, sizeof(val), "%.0f", scene.deviceState.getCpuTempC()[0]);
             snprintf(unit, sizeof(unit), "%sC", deg);
-            snprintf(name, sizeof(name), "CPU TEMP");}
+            snprintf(name, sizeof(name), "CPU온도");}
             break;
           
           case UIMeasure::MEMORY_TEMPC: 
@@ -761,7 +761,7 @@ static void ui_draw_measures(UIState *s){
             val_color = color_from_thermal_status(int(scene.deviceState.getThermalStatus()));
             snprintf(val, sizeof(val), "%.0f", scene.deviceState.getAmbientTempC());
             snprintf(unit, sizeof(unit), "%sC", deg);
-            snprintf(name, sizeof(name), "AMB TEMP");}
+            snprintf(name, sizeof(name), "외부온도");}
             break;
           
           case UIMeasure::CPU_PERCENT: 
@@ -778,7 +778,7 @@ static void ui_draw_measures(UIState *s){
             }
             val_color = color_from_thermal_status(int(scene.deviceState.getThermalStatus()));
             snprintf(val, sizeof(val), "%d%%", int(cpu));
-            snprintf(name, sizeof(name), "CPU PERC");}
+            snprintf(name, sizeof(name), "CPU현황");}
             break;
             
           /* case UIMeasure::FANSPEED_PERCENT: 
@@ -816,7 +816,7 @@ static void ui_draw_measures(UIState *s){
             b = (b >= 0 ? (b <= 255 ? b : 255) : 0);
             val_color = nvgRGBA(255, g, b, 200);
             snprintf(val, sizeof(val), "%d%%", mem_perc);
-            snprintf(name, sizeof(name), "메모리 사용량");}
+            snprintf(name, sizeof(name), "메모리현황");}
             break;
           
           case UIMeasure::FREESPACE_STORAGE: 
@@ -844,7 +844,7 @@ static void ui_draw_measures(UIState *s){
               auto data2 = sm["gpsLocationExternal"].getGpsLocationExternal();
               scene.gpsAccuracyUblox = data2.getAccuracy();
             }
-            snprintf(name, sizeof(name), "GPS 정확도");
+            snprintf(name, sizeof(name), "GPS정확도");
             if (scene.gpsAccuracyUblox != 0.00) {
               //show red/orange if gps accuracy is low
               if(scene.gpsAccuracyUblox > 0.85) {
@@ -960,7 +960,7 @@ static void ui_draw_measures(UIState *s){
           
           case UIMeasure::LEAD_TTC:
             {
-            snprintf(name, sizeof(name), "앞차속도");
+            snprintf(name, sizeof(name), "추돌시간");
             if (scene.lead_status && scene.lead_v_rel < 0.) {
               float ttc = -scene.lead_d_rel / scene.lead_v_rel;
               g = 0;
@@ -983,12 +983,12 @@ static void ui_draw_measures(UIState *s){
             } else {
               snprintf(val, sizeof(val), "-");
             }
-            snprintf(unit, sizeof(unit), "s");}
+            snprintf(unit, sizeof(unit), "초");}
             break;
 
           case UIMeasure::LEAD_DISTANCE_LENGTH:
             {
-              snprintf(name, sizeof(name), "차간거리");
+              snprintf(name, sizeof(name), "앞차거리");
               if (scene.lead_status) {
                 g = 0;
                 b = 0;
@@ -1002,13 +1002,13 @@ static void ui_draw_measures(UIState *s){
               } else {
                 snprintf(val, sizeof(val), "-");
               }
-              snprintf(unit, sizeof(unit), "m");
+              snprintf(unit, sizeof(unit), "미터");
             }
             break;
         
           case UIMeasure::LEAD_DESIRED_DISTANCE_LENGTH:
             {
-              snprintf(name, sizeof(name), "필요유지거리");
+              snprintf(name, sizeof(name), "추돌거리:필요거리");
               auto follow_d = scene.desiredFollowDistance * scene.car_state.getVEgo() + scene.stoppingDistance;
               if (scene.lead_status) {
                 g = 0;
@@ -1023,13 +1023,13 @@ static void ui_draw_measures(UIState *s){
               } else {
                 snprintf(val, sizeof(val), "-");
               }
-              snprintf(unit, sizeof(unit), "m");
+              snprintf(unit, sizeof(unit), "미터");
             }
             break;
             
           case UIMeasure::LEAD_DISTANCE_TIME:
             {
-            snprintf(name, sizeof(name), "앞차도달시간");
+            snprintf(name, sizeof(name), "추돌시간");
             if (scene.lead_status && scene.car_state.getVEgo() > 0.5) {
               float follow_t = scene.lead_d_rel / scene.car_state.getVEgo();
               g = 0;
@@ -1044,12 +1044,12 @@ static void ui_draw_measures(UIState *s){
             } else {
               snprintf(val, sizeof(val), "-");
             }
-            snprintf(unit, sizeof(unit), "s");}
+            snprintf(unit, sizeof(unit), "초");}
             break;
           
           case UIMeasure::LEAD_DESIRED_DISTANCE_TIME:
             {
-            snprintf(name, sizeof(name), "간격유지필요시간");
+            snprintf(name, sizeof(name), "추돌시간:필요시간");
             if (scene.lead_status && scene.car_state.getVEgo() > 0.5) {
               float follow_t = scene.lead_d_rel / scene.car_state.getVEgo();
               float des_follow_t = scene.desiredFollowDistance + scene.stoppingDistance / scene.car_state.getVEgo();
@@ -1065,7 +1065,7 @@ static void ui_draw_measures(UIState *s){
             } else {
               snprintf(val, sizeof(val), "-");
             }
-            snprintf(unit, sizeof(unit), "s");}
+            snprintf(unit, sizeof(unit), "초");}
             break;
           
           /* case UIMeasure::LEAD_COSTS:
