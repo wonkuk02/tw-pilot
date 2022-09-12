@@ -169,6 +169,11 @@ typedef enum UIMeasure { //rearrange here to adjust order when cycling measures
   BEARING,
   PERCENT_GRADE,
   PERCENT_GRADE_DEVICE,
+  ROLL,
+  ROLL_DEVICE,
+  LANE_WIDTH,
+  DISTANCE_TRAVELLED,
+  // Lead info
   FOLLOW_LEVEL,
   LEAD_TTC,
   LEAD_DISTANCE_LENGTH,
@@ -178,7 +183,19 @@ typedef enum UIMeasure { //rearrange here to adjust order when cycling measures
   LEAD_COSTS,
   LEAD_VELOCITY_RELATIVE,
   LEAD_VELOCITY_ABS,
-  GPS_ACCURACY,
+  // EV info
+  HVB_VOLTAGE,
+  HVB_CURRENT,
+  HVB_WATTAGE,
+  HVB_WATTVOLT,
+  EV_EFF_NOW,
+  EV_EFF_RECENT,
+  EV_EFF_TRIP,
+  EV_CONSUM_NOW,
+  EV_CONSUM_RECENT,
+  EV_CONSUM_TRIP,
+  EV_BOTH_NOW,
+  // Device info
   CPU_TEMP_AND_PERCENTF,
   CPU_TEMP_AND_PERCENTC,
   CPU_TEMPF,
@@ -193,17 +210,12 @@ typedef enum UIMeasure { //rearrange here to adjust order when cycling measures
   MEMORY_USAGE_PERCENT,
   FREESPACE_STORAGE,
   DEVICE_BATTERY,
-  HVB_VOLTAGE,
-  HVB_CURRENT,
-  HVB_WATTAGE,
-  HVB_WATTVOLT,
+  GPS_ACCURACY,
+  // vision turn speed controller
   VISION_CURLATACCEL,
   VISION_MAXVFORCURCURV,
   VISION_MAXPREDLATACCEL,
   VISION_VF,
-  LANE_WIDTH,
-  ROLL,
-  ROLL_DEVICE,
   
   NUM_MEASURES
 } UIMeasure;
@@ -269,11 +281,16 @@ typedef struct UIScene {
 // measures
   int measure_min_num_slots = 0;
   int measure_max_num_slots = 10;
+  int measure_max_rows = measure_max_num_slots / 2;
   int measure_cur_num_slots = 3;
   int measure_slots[10];
   Rect measure_slots_rect;
   Rect measure_slot_touch_rects[10];
   int num_measures = UIMeasure::NUM_MEASURES; // the number of cases handled in ui_draw_measures() in paint.cc
+  std::vector<int> measure_config_list = {0,1,2,3,4,5,6,8,10}; // 6,8,10 are 3x2, 4x2, and 5x2
+  int measure_config_num = 0;
+  int measure_num_rows = 0;
+  int measure_row_offset = 0;
   float measures_touch_timeout = 10.;
   float measures_last_tap_t = -measures_touch_timeout;
   
@@ -303,6 +320,19 @@ typedef struct UIScene {
 
   int lead_status;
   float lead_d_rel, lead_v_rel, lead_v;
+
+  // EV efficiency
+  float ev_eff_distances[2] = {30.f / 20.f, 8046.f / 20.f};
+  float ev_eff_distances_recip[2] = {1.f/ev_eff_distances[0], 1.f/ev_eff_distances[1]}; // [m] denominator for weighted average weights
+  float ev_eff_stopped_kWh = 0.; // [kWh]
+  float ev_eff_total_kWh = 0.; // [kWh]
+  float ev_eff_total_dist = 0.; // [m]
+  float ev_recip_eff_wa[2] = {0., 0.}; // [kW] weighted averages of mi(km)/kWh
+  float ev_eff_total = 0.;
+  float ev_recip_eff_wa_max = 250.;
+  float ev_eff_last_time = 0.;
+  int ev_eff_params_write_freq = 500; // save trip and 5mi efficiencies every 5s
+
 
   // gps
   float altitudeUblox, gpsAccuracyUblox = 0.;

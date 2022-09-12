@@ -31,6 +31,8 @@ static const float fade_time_step = 1. / fade_duration; // will step in the tran
 static const float dynamic_follow_fade_duration = 0.5;
 static const float dynamic_follow_fade_step = 1. / dynamic_follow_fade_duration;
 
+static const float voacc_lead_min_laneline_prob = 0.6; // should match MIN_LANE_PROB in selfdrive/controls/radard.py
+
 // Given interpolate between engaged/warning/critical bg color on [0-1]
 // If a < 0, interpolate that too based on bg color alpha, else pass through.
 NVGcolor interp_alert_color(float p, int a){
@@ -126,10 +128,34 @@ static int get_path_length_idx(const cereal::ModelDataV2::XYZTData::Reader &line
 static void update_leads(UIState *s, const cereal::ModelDataV2::Reader &model) {
   auto leads = model.getLeadsV3();
   auto model_position = model.getPosition();
+  bool lead_drawn = false;
   for (int i = 0; i < 2; ++i) {
     if (leads[i].getProb() > 0.5) {
+      lead_drawn = true;
       float z = model_position.getZ()[get_path_length_idx(model_position, leads[i].getX()[0])];
       calib_frame_to_full_frame(s, leads[i].getX()[0], leads[i].getY()[0], z + 1.22, &s->scene.lead_vertices[i]);
+    }
+  }
+  if (!lead_drawn){
+    // draw VOACC leads
+    for (int i = 0; i < 2; ++i) {
+      if (s->scene.lead_data[i].getStatus() && s->scene.lead_data[i].getDRel() >= 120.) {
+        int path_ind = get_path_length_idx(model_position, s->scene.lead_data[i].getDRel());
+        float z = model_position.getZ()[path_ind];
+        if (path_ind == TRAJECTORY_SIZE-1){
+          for (int j = 0; j < 2; ++j){
+            auto prob = model.getLaneLineProbs()[1+j];
+            if (prob > voacc_lead_min_laneline_prob){
+              int path_ind2 = get_path_length_idx(model.getLaneLines()[1+j], s->scene.lead_data[i].getDRel());
+              if (path_ind2 < path_ind){
+                path_ind = path_ind2;
+                z = model.getLaneLines()[1+j].getZ()[path_ind];
+              }
+            }
+          }
+        }
+        calib_frame_to_full_frame(s, s->scene.lead_data[i].getDRel(), -(s->scene.lead_data[i].getYRel()), z + 1.22, &s->scene.lead_vertices[i]);
+      }
     }
   }
 }
@@ -237,16 +263,27 @@ static void update_state(UIState *s) {
       scene.dynamic_follow_active = std::stoi(Params().get("DynamicFollow"));
     }
   }
-  
-  if (scene.lane_pos != 0 && !s->scene.auto_lane_pos_active && scene.lane_pos_dist_since_set > scene.lane_pos_timeout_dist){
-    scene.lane_pos = 0;
-    scene.lane_pos_timeout_dist = scene.lane_pos_dist_short;
-    Params().put("LanePosition", "0", 1);
-  }
-  
-  // fade screen brightness
-  // update screen dim
+
   if (scene.started){
+
+    if (scene.ev_eff_total_dist > 10. && sm.frame % scene.ev_eff_params_write_freq == 0) {
+      char val_str[18];
+      sprintf(val_str, "%.3f", scene.ev_recip_eff_wa[1]);
+      Params().put("EVConsumption5Mi", val_str, strlen(val_str));
+      sprintf(val_str, "%.3f", scene.ev_eff_total_kWh);
+      Params().put("EVConsumptionTripkWh", val_str, strlen(val_str));
+      sprintf(val_str, "%.3f", scene.ev_eff_total_dist);
+      Params().put("EVConsumptionTripDistance", val_str, strlen(val_str));
+    }
+    
+    if (scene.lane_pos != 0 && !s->scene.auto_lane_pos_active && scene.lane_pos_dist_since_set > scene.lane_pos_timeout_dist){
+      scene.lane_pos = 0;
+      scene.lane_pos_timeout_dist = scene.lane_pos_dist_short;
+      Params().put("LanePosition", "0", 1);
+    }
+  
+    // fade screen brightness
+    // update screen dim
     const Rect maxspeed_rect = {bdr_s * 2, int(bdr_s * 1.5), 184, 202};
     const int radius = 96;
     const int center_x = maxspeed_rect.centerX();
@@ -317,7 +354,39 @@ static void update_state(UIState *s) {
     scene.steerOverride= scene.car_state.getSteeringPressed();
     scene.angleSteers = scene.car_state.getSteeringAngleDeg();
     scene.engineRPM = static_cast<int>((scene.car_state.getEngineRPM() / (10.0)) + 0.5) * 10;
+
+    // EV efficiency
+    float cur_dist = std::abs(scene.car_state.getVEgo() * (t - scene.ev_eff_last_time));
     
+    scene.ev_eff_total_dist += cur_dist;
+    float cur_kW = -scene.car_state.getHvbWattage();
+    float cur_kWh = cur_kW * (t - scene.ev_eff_last_time) * 2.8e-4; // [kJ converted to kWh]
+    scene.ev_eff_total_kWh += cur_kWh;
+
+    if (cur_dist > 1e-4){
+      if (scene.ev_eff_stopped_kWh != 0.){
+        cur_kWh += scene.ev_eff_stopped_kWh;
+        scene.ev_eff_stopped_kWh = 0.;
+      }
+      float cur_recip_eff = cur_kWh * (scene.is_metric ? 1000. : 1609.) / cur_dist;
+      for (int i = 0; i < 2; ++i){
+        float tmp_cur_dist = (cur_dist > scene.ev_eff_distances[i] ? scene.ev_eff_distances[i] : cur_dist);
+        scene.ev_recip_eff_wa[i] = tmp_cur_dist * scene.ev_eff_distances_recip[i] * cur_recip_eff 
+                            + (1. - tmp_cur_dist * scene.ev_eff_distances_recip[i]) * scene.ev_recip_eff_wa[i];
+      }
+    }
+    else{
+      scene.ev_eff_stopped_kWh += cur_kWh;
+    }
+    if (scene.ev_eff_total_kWh != 0.){
+        scene.ev_eff_total = scene.ev_eff_total_dist / (scene.is_metric ? 1000. : 1609.) / scene.ev_eff_total_kWh;
+        if (std::abs(scene.ev_eff_total) > scene.ev_recip_eff_wa_max){
+          scene.ev_eff_total = (scene.ev_eff_total > 0. ? scene.ev_recip_eff_wa_max : -scene.ev_recip_eff_wa_max);
+        }
+    }
+    scene.ev_eff_last_time = t;
+
+    // lane position
     if (scene.lane_pos != 0){
       scene.lane_pos_dist_since_set += scene.car_state.getVEgo() * (t - scene.lane_pos_dist_last_t);
       if (!s->scene.auto_lane_pos_active && abs(scene.car_state.getSteeringAngleDeg()) > scene.lane_pos_max_steer_deg){
@@ -332,10 +401,12 @@ static void update_state(UIState *s) {
   }
   if (sm.updated("radarState")) {
     auto radar_state = sm["radarState"].getRadarState();
-    scene.lead_v_rel = radar_state.getLeadOne().getVRel();
-    scene.lead_d_rel = radar_state.getLeadOne().getDRel();
-    scene.lead_v = radar_state.getLeadOne().getVLead();
-    scene.lead_status = radar_state.getLeadOne().getStatus();
+    scene.lead_data[0] = radar_state.getLeadOne();
+    scene.lead_data[1] = radar_state.getLeadTwo();
+    scene.lead_v_rel = scene.lead_data[0].getVRel();
+    scene.lead_d_rel = scene.lead_data[0].getDRel();
+    scene.lead_v = scene.lead_data[0].getVLead();
+    scene.lead_status = scene.lead_data[0].getStatus();
     if (!scene.lead_status){
       scene.lead_x_vals.clear();
       scene.lead_y_vals.clear();
@@ -566,6 +637,26 @@ static void update_status(UIState *s) {
         s->scene.dynamic_follow_mode_touch_rect = {1,1,1,1};
       }
 
+      if (Params().getBool("EVConsumptionReset")) {
+        char val_str[18];
+        sprintf(val_str, "0.0");
+        Params().put("EVConsumption5Mi", val_str, strlen(val_str));
+        Params().put("EVConsumptionTripkWh", val_str, strlen(val_str));
+        Params().put("EVConsumptionTripDistance", val_str, strlen(val_str));
+        Params().putBool("EVConsumptionReset", false);
+        s->scene.ev_recip_eff_wa[1] = 0.0;
+        s->scene.ev_eff_total_dist = 0.0;
+        s->scene.ev_eff_total_kWh = 0.0;
+        s->scene.ev_eff_total = 0.0;
+      }
+      else{
+        s->scene.ev_recip_eff_wa[1] = std::stof(Params().get("EVConsumption5Mi"));
+        s->scene.ev_eff_total_dist = std::stof(Params().get("EVConsumptionTripDistance"));
+        s->scene.ev_eff_total_kWh = std::stof(Params().get("EVConsumptionTripkWh"));
+        s->scene.ev_eff_total = (s->scene.ev_eff_total_kWh != 0.f ? s->scene.ev_eff_total_dist / s->scene.ev_eff_total_kWh : 0.0);
+      }
+      s->scene.ev_recip_eff_wa[0] = 0.0;
+
       s->scene.sessionInitTime = seconds_since_boot();
       s->scene.percentGrade = 0;
       for (int i = 0; i < 5; ++i){
@@ -575,9 +666,17 @@ static void update_status(UIState *s) {
         s->scene.percentGradeIterRolled = false;
         s->scene.percentGradeRollingIter = 0;
       }
+      s->scene.ev_eff_total_kWh = 0.;
+      s->scene.ev_eff_total_dist = 0.;
 
-      s->scene.measure_cur_num_slots = std::stoi(Params().get("MeasureNumSlots"));
-      for (int i = 0; i < QUIState::ui_state.scene.measure_max_num_slots; ++i){
+      s->scene.measure_config_num = std::stoi(Params().get("MeasureConfigNum"));
+      s->scene.measure_cur_num_slots = s->scene.measure_config_list[s->scene.measure_config_num];
+      s->scene.measure_num_rows = s->scene.measure_cur_num_slots;
+      if (s->scene.measure_num_rows > s->scene.measure_max_rows){
+        s->scene.measure_num_rows /= 2;
+      }
+      s->scene.measure_row_offset = s->scene.measure_max_rows - s->scene.measure_num_rows;
+      for (int i = 0; i < s->scene.measure_max_num_slots; ++i){
         char slotName[16];
         snprintf(slotName, sizeof(slotName), "MeasureSlot%.2d", i);
         s->scene.measure_slots[i] = std::stoi(Params().get(slotName));

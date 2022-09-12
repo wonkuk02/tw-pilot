@@ -58,10 +58,15 @@ def manager_init():
     ("ScreenDimMode", "2"),
     ("AccelModeButton", "0"),
     ("AccelMode", "0"),
+    ("EVConsumptionReset", "0"),
+    ("EVConsumption5Mi", "0"),
+    ("EVConsumptionTripkWh", "0"),
+    ("EVConsumptionTripDistance", "0"),
     ("EndToEndToggle", "1"),
     ("EnableTorqueControl", "0"),
     ("LanelessMode", "1"),
     ("LanePositionEnabled", "0"),
+    ("LongRangeLeadsEnabled", "0"),
     ("AutoLanePositionActive", "0"),
     ("LanePosition", "0"),
     ("NudgelessLaneChange", "0"),
@@ -69,7 +74,6 @@ def manager_init():
     ("CoastingDL", "0"),
     ("RegenBraking", "0"),
     ("OnePedalMode", "0"),
-    ("OnePedalModeSimple", "0"),
     ("OnePedalDLCoasting", "0"),
     ("OnePedalModeEngageOnGas", "0"),
     ("OnePedalDLEngageOnGas", "0"),
@@ -84,18 +88,18 @@ def manager_init():
     ("PrintLeadInfo", "1"),
     ("DisableOnroadUploads", "0"),
     ("LowOverheadMode", "0"),
-    ("FPVolt", "1"),
-    ("MeasureNumSlots", "0"),
-    ("MeasureSlot00", "0"), # steering angle
-    ("MeasureSlot01", "11"), # percent grade
-    ("MeasureSlot02", "10"), # altitude
-    ("MeasureSlot03", "5"), # engine rpm + coolant temp °F
-    ("MeasureSlot04", "13"), # follow gap level
-    ("MeasureSlot05", "16"), # lead dist [s]
-    ("MeasureSlot06", "15"), # lead dist [m]
-    ("MeasureSlot07", "20"), # lead rel spd [mph]
-    ("MeasureSlot08", "21"),# lead spd [mph]
-    ("MeasureSlot09", "23"),# device cpu percent and temp °F
+    ("FPVolt", "0"),
+    ("MeasureConfigNum", "0"),
+    ("MeasureSlot00", "12"), # bearing 
+    ("MeasureSlot01", "11"), # altitude 
+    ("MeasureSlot02", "14"), # percent grade
+    ("MeasureSlot03", "9"), # Acceleration
+    ("MeasureSlot04", "6"), # engine RPM + coolant temp F
+    ("MeasureSlot05", "34"), # Trip EV efficiency 
+    ("MeasureSlot06", "33"), # 5mi EV efficiency
+    ("MeasureSlot07", "38"), # Instantaneous EV efficiency/consuption
+    ("MeasureSlot08", "53"),# GPS accuracy
+    ("MeasureSlot09", "40"),# device cpu percent and temp °C
   ]
   if not PC:
     default_params.append(("LastUpdateTime", datetime.datetime.utcnow().isoformat().encode('utf8')))

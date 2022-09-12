@@ -480,9 +480,25 @@ struct RadarState @0x9a185389d6fdd05f {
     aLeadTau @12 :Float32;
     modelProb @13 :Float32;
     radar @14 :Bool;
+    source @15 :LeadDataSource;
+    checkSource @16 :LeadCheckSource;
 
     aLeadDEPRECATED @5 :Float32;
   }
+
+  enum LeadDataSource {
+    radar @0;
+    vision @1;
+    model @2;
+  }
+
+  enum LeadCheckSource {
+    modelLead @0;
+    modelPath @1;
+    modelLaneLines @2;
+    lowSpeedOverride @3;
+  }
+
 
   # deprecated
   ftMonoTimeDEPRECATED @7 :UInt64;
@@ -561,8 +577,7 @@ struct ControlsState @0x97ff69c53601abf1 {
   # Road Speed Limiter
   sccStockCamAct @61 :Float32;
   sccStockCamStatus @62 :Float32;
-  roadLimitSpeed @63 :Int32;
-  roadLimitSpeedLeftDist @64 :Int32;
+
   lateralControlState :union {
     indiState @52 :LateralINDIState;
     pidState @53 :LateralPIDState;
@@ -841,6 +856,8 @@ struct LongitudinalPlan @0xe00b5b3eba12876c {
   accels @32 :List(Float32);
   speeds @33 :List(Float32);
   jerks @34 :List(Float32);
+  leadAccelPlanned @65 :Float32;
+
   visionTurnControllerState @35 :VisionTurnControllerState;
   visionTurnSpeed @36 :Float32;
   visionCurrentLateralAcceleration @54 :Float32;
@@ -876,6 +893,7 @@ struct LongitudinalPlan @0xe00b5b3eba12876c {
     turn @5;
     limit @6;
     turnlimit @7;
+    onepedal @8;
   }
 
   # deprecated

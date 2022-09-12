@@ -3,6 +3,7 @@ from cereal import log
 from common.filter_simple import FirstOrderFilter
 from common.numpy_fast import interp, clip
 from common.realtime import DT_MDL
+from common.realtime import sec_since_boot
 from selfdrive.hardware import EON, TICI
 from selfdrive.swaglog import cloudlog
 from enum import Enum
@@ -41,6 +42,8 @@ class LaneOffset:
   AUTO_MIN_LANELINE_PROB = 0.9
   AUTO_MIN_ADJACENT_LANELINE_PROB = 0.3
   
+  AUTO_LANE_STATE_MIN_TIME = 3.0 # [s] amount of time the lane state must stay the same before it can be acted upon
+  
   AUTO_ENABLE_ROAD_TYPES = {0, 10, 20, 30} # freeway and state highways (see highway ranks in /Users/haiiro/NoSync/optw/openpilot/selfdrive/mapd/lib/WayRelation.py)
   
   def __init__(self, mass=0.):
@@ -58,9 +61,13 @@ class LaneOffset:
     self._shoulder_width_mean_left = 0.
     self._shoulder_width_mean_right = 0.
     self._cs = None
-    self._lp = None
+    self._long_plan = None
+    self._lat_plan = None
     self._lat_accel_cur = 0.
     self._lat_accel_pred = 0.
+    self._lat_curvature_cur = 0.
+    self._lat_curvature_pred = 0.
+    self._lane_state_changed_last_t = 0.
   
   def update_lane_info(self, md, v_ego, lane_width):
     self._lane_width_mean_left_adjacent = 0.
@@ -127,9 +134,7 @@ class LaneOffset:
   def update_lane_pos_auto(self, lane_width):
     lane_pos_auto = 0.
     if self._lane_probs[1] > self.AUTO_MIN_LANELINE_PROB \
-        and self._lane_probs[2] > self.AUTO_MIN_LANELINE_PROB \
-        and self._lat_accel_cur < self.AUTO_MAX_CUR_LAT_ACCEL \
-        and self._lat_accel_pred < self.AUTO_MAX_PRED_LAT_ACCEL:
+        and self._lane_probs[2] > self.AUTO_MIN_LANELINE_PROB:
       if (self._lane_width_mean_left_adjacent > 0. and self._lane_width_mean_right_adjacent > 0.) \
           or (self._lane_width_mean_left_adjacent == 0. and self._lane_width_mean_right_adjacent == 0.):
         lane_pos_auto = 0.
@@ -137,29 +142,48 @@ class LaneOffset:
         lane_pos_auto = -1.
       elif self._lane_width_mean_right_adjacent > 0. and self._shoulder_width_mean_left >= self.AUTO_MIN_SHOULDER_WIDTH_FACTOR * lane_width:
         lane_pos_auto = 1.
+    if lane_pos_auto != 0. \
+        and ((self._lat_accel_cur >= self.AUTO_MAX_CUR_LAT_ACCEL \
+        and np.sign(self._lat_curvature_cur) == np.sign(lane_pos_auto)) \
+        or (self._lat_accel_pred >= self.AUTO_MAX_PRED_LAT_ACCEL \
+        and np.sign(self._lat_curvature_pred) == np.sign(lane_pos_auto))):
+      lane_pos_auto = 0.
+    
+    if lane_pos_auto != self._lane_pos_auto:
+      self._lane_state_changed_last_t = sec_since_boot()
     
     self._lane_pos_auto = lane_pos_auto
     return lane_pos_auto
     
   def update(self, lane_pos=0., lane_width=LANE_WIDTH_DEFAULT, auto_active=False, md=None, sm=None): # 0., 1., -1. = center, left, right
+    t = sec_since_boot()
+    
     if md is not None and sm is not None:
       if sm.valid.get('carState', False):
         self._cs = sm['carState']
       if sm.valid.get('longitudinalPlan', False):
-        self._lp = sm['longitudinalPlan']
+        self._long_plan = sm['longitudinalPlan']
+      if sm.valid.get('lateralPlan', False):
+        self._lat_plan = sm['lateralPlan']
       if self._cs is not None:
         self.update_lane_info(md, self._cs.vEgo, lane_width)
         self.update_lane_pos_auto(lane_width)
-      if self._lp is not None:
-        self._lat_accel_cur = self._lp.visionCurrentLateralAcceleration
-        self._lat_accel_pred = self._lp.visionMaxPredictedLateralAcceleration
+      if self._long_plan is not None:
+        self._lat_accel_cur = self._long_plan.visionCurrentLateralAcceleration
+        self._lat_accel_pred = self._long_plan.visionMaxPredictedLateralAcceleration
+        self._lat_curvature_pred = self._long_plan.visionMaxPredictedCurvature
+      if self._lat_plan is not None and len(self._lat_plan.curvatures) > 0:
+        self._lat_curvature_cur = self._lat_plan.curvatures[0]
       self._auto_is_active = auto_active
     else:
       self._auto_is_active = False
       
     do_slow = self._auto_is_active # and self._lane_pos_auto != 0.
     if self._auto_is_active:
-      self.lane_pos = self._lane_pos_auto
+      if t - self._lane_state_changed_last_t > self.AUTO_LANE_STATE_MIN_TIME:
+        self.lane_pos = self._lane_pos_auto
+      else:
+        self.lane_pos = 0.
     else:
       self.lane_pos = lane_pos
     offset = self.OFFSET * self.offset_scale * self.lane_pos * lane_width * (self.AUTO_OFFSET_FACTOR if self._auto_is_active else 1.)
