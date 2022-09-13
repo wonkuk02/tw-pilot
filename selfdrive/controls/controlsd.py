@@ -32,7 +32,8 @@ from selfdrive.locationd.calibrationd import Calibration
 from selfdrive.modeld.constants import T_IDXS
 from selfdrive.hardware import HARDWARE, TICI, EON
 from selfdrive.manager.process_config import managed_processes
-from selfdrive.road_speed_limiter import road_speed_limiter_get_max_speed, road_speed_limiter_get_active
+from selfdrive.road_speed_limiter import road_speed_limiter_get_max_speed, road_speed_limiter_get_active, \
+  get_road_speed_limiter
 
 MIN_CURVE_SPEED = 45. * CV.KPH_TO_MS
 
@@ -517,12 +518,14 @@ class Controls:
       self.v_cruise_kph = 0
     self.CI.CS.v_cruise_kph = self.v_cruise_kph
 
-    limit_speed, self.road_limit_speed, self.road_limit_left_dist, first_started, limit_log = road_speed_limiter_get_max_speed(CS, self.v_cruise_kph)
+    # limit_speed, self.road_limit_speed, self.road_limit_left_dist, first_started, limit_log = road_speed_limiter_get_max_speed(CS, self.v_cruise_kph)
+    road_speed_limiter = get_road_speed_limiter()
+    apply_limit_speed, road_limit_speed, left_dist, first_started, limit_log = road_speed_limiter.get_max_speed(CS, self.v_cruise_kph)
 
-    if limit_speed > 20:
-      self.v_cruise_kph_limit = min(limit_speed, self.v_cruise_kph)
+    if apply_limit_speed > 20:
+      self.v_cruise_kph_limit = min(apply_limit_speed, self.v_cruise_kph)
 
-      if limit_speed < CS.vEgo * CV.MS_TO_KPH:
+      if apply_limit_speed < CS.vEgo * CV.MS_TO_KPH:
         self.events.add(EventName.slowingDownSpeedSound)
 
     else:
@@ -716,9 +719,9 @@ class Controls:
 
     CC.cruiseControl.override = True
     CC.cruiseControl.cancel = not self.CP.pcmCruise or (not self.enabled and CS.cruiseState.enabled)
-    CC.sccSmoother.roadLimitSpeedActive = road_speed_limiter_get_active()
-    CC.sccSmoother.roadLimitSpeed = self.road_limit_speed
-    CC.sccSmoother.roadLimitSpeedLeftDist = self.road_limit_left_dist
+    # CC.sccSmoother.roadLimitSpeedActive = road_speed_limiter_get_active()
+    # CC.sccSmoother.roadLimitSpeed = self.road_limit_speed
+    # CC.sccSmoother.roadLimitSpeedLeftDist = self.road_limit_left_dist
     if self.joystick_mode and self.sm.rcv_frame['testJoystick'] > 0 and self.sm['testJoystick'].buttons[0]:
       CC.cruiseControl.cancel = True
 

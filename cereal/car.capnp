@@ -354,14 +354,11 @@ struct CarControl {
 
   struct SccSmoother {
     longControl @0:Bool;
-
     logMessage @1 :Text;
-
-    roadLimitSpeedActive @2 :Int32;
-    roadLimitSpeed @3 :UInt32;
-    roadLimitSpeedLeftDist @4 :UInt32;
-
-    autoTrGap @5 :UInt32;
+    # roadLimitSpeedActive @2 :Int32;
+    # roadLimitSpeed @3 :UInt32;
+    # roadLimitSpeedLeftDist @4 :UInt32;
+    autoTrGap @2 :UInt32;
   }
 
   struct Actuators {

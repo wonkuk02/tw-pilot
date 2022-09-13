@@ -1407,10 +1407,29 @@ static void ui_draw_vision_speed(UIState *s) {
 static void ui_draw_speed_limit(UIState *s)
 {
     const UIScene *scene = &s->scene;
-    cereal::CarControl::SccSmoother::Reader scc_smoother = scene->car_control.getSccSmoother();
-    int activeNDA = scc_smoother.getRoadLimitSpeedActive();
-    int limit_speed = scc_smoother.getRoadLimitSpeed();
-    int left_dist = scc_smoother.getRoadLimitSpeedLeftDist();
+    const SubMaster &sm = *(uiState()->sm);
+    // cereal::CarControl::SccSmoother::Reader scc_smoother = scene->car_control.getSccSmoother();
+    auto roadLimitSpeed = sm["roadLimitSpeed"].getRoadLimitSpeed();
+
+    int activeNDA = roadLimitSpeed.getActive();
+
+    int camLimitSpeed = roadLimitSpeed.getCamLimitSpeed();
+    int camLimitSpeedLeftDist = roadLimitSpeed.getCamLimitSpeedLeftDist();
+
+    int sectionLimitSpeed = roadLimitSpeed.getSectionLimitSpeed();
+    int sectionLeftDist = roadLimitSpeed.getSectionLeftDist();
+
+    int limit_speed = 0;
+    int left_dist = 0;
+
+    if(camLimitSpeed >= 0 && camLimitSpeedLeftDist > 0) {
+      limit_speed = camLimitSpeed;
+      left_dist = camLimitSpeedLeftDist;
+    }
+    else if(sectionLimitSpeed >= 0 && sectionLeftDist > 0) {
+      limit_speed = sectionLimitSpeed;
+      left_dist = sectionLeftDist;
+    }
 
     if(activeNDA > 0)
     {
