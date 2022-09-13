@@ -374,37 +374,49 @@ static void ui_draw_vision_lane_lines(UIState *s) {
         COLOR_BLACK_ALPHA(80), COLOR_BLACK_ALPHA(20));
     } 
     else if (!scene.lateralPlan.lanelessModeStatus) {
-      if (scene.color_path){
-        track_bg = nvgLinearGradient(s->vg, s->fb_w, s->fb_h, s->fb_w, s->fb_h*.4,
-          interp_alert_color(fabs(scene.lateralCorrection), 255), 
-          interp_alert_color(fabs(scene.lateralCorrection), 0));
+      if (scene.car_state.getLkMode()){
+        if (scene.color_path){
+          track_bg = nvgLinearGradient(s->vg, s->fb_w, s->fb_h, s->fb_w, s->fb_h*.4,
+            interp_alert_color(fabs(scene.lateralCorrection), 140), 
+            interp_alert_color(fabs(scene.lateralCorrection), 0));
+        }
+        else{
+          track_bg = nvgLinearGradient(s->vg, s->fb_w, s->fb_h, s->fb_w, s->fb_h*.4,
+            interp_alert_color(0., 140), 
+            interp_alert_color(0., 0));
+        }
       }
       else{
-        track_bg = nvgLinearGradient(s->vg, s->fb_w, s->fb_h, s->fb_w, s->fb_h*.4,
-          interp_alert_color(0., 255), 
-          interp_alert_color(0., 0));
+        track_bg = nvgLinearGradient(s->vg, s->fb_w, s->fb_h, s->fb_w, s->fb_h * .4,
+                                          COLOR_WHITE_ALPHA(130), COLOR_WHITE_ALPHA(0));
       }
     } 
     else { // differentiate laneless mode color (Grace blue)
-      if (scene.color_path){
-        int g, r = 255. * fabs(scene.lateralCorrection);
-        r = CLIP(r, 0, 255);
-        g = 100 + r;
-        g = CLIP(g, 0, 255);
-        track_bg = nvgLinearGradient(s->vg, s->fb_w, s->fb_h, s->fb_w, s->fb_h * .4,
-                                    nvgRGBA(r, g, 255, 255), 
-                                    nvgRGBA(r, g, 255, 0));
+      if (scene.car_state.getLkMode()){
+        if (scene.color_path){
+          int g, r = 255. * fabs(scene.lateralCorrection);
+          r = CLIP(r, 0, 255);
+          g = 100 + r;
+          g = CLIP(g, 0, 255);
+          track_bg = nvgLinearGradient(s->vg, s->fb_w, s->fb_h, s->fb_w, s->fb_h * .4,
+                                      nvgRGBA(r, g, 255, 150), 
+                                      nvgRGBA(r, g, 255, 0));
+        }
+        else{
+          track_bg = nvgLinearGradient(s->vg, s->fb_w, s->fb_h, s->fb_w, s->fb_h * .4,
+                                    COLOR_GRACE_BLUE_ALPHA(150), 
+                                    COLOR_GRACE_BLUE_ALPHA(0));
+        }
       }
       else{
         track_bg = nvgLinearGradient(s->vg, s->fb_w, s->fb_h, s->fb_w, s->fb_h * .4,
-                                  COLOR_GRACE_BLUE_ALPHA(255), 
-                                  COLOR_GRACE_BLUE_ALPHA(0));
+                                          COLOR_WHITE_ALPHA(130), COLOR_WHITE_ALPHA(0));
       }
     }
   } else {
     // Draw white vision track
     track_bg = nvgLinearGradient(s->vg, s->fb_w, s->fb_h, s->fb_w, s->fb_h * .4,
-                                          COLOR_WHITE_ALPHA(150), COLOR_WHITE_ALPHA(20));
+                                          COLOR_WHITE_ALPHA(130), COLOR_WHITE_ALPHA(0));
   }
   // paint path
   ui_draw_line(s, scene.track_vertices, nullptr, &track_bg);
@@ -1687,7 +1699,7 @@ static void ui_draw_vision_brake(UIState *s) {
 
 static void draw_lane_pos_buttons(UIState *s) {
   if (s->vipc_client->connected && s->scene.lane_pos_enabled) {
-    const int radius = ((*s->sm)["controlsState"].getControlsState().getAlertSize() == cereal::ControlsState::AlertSize::NONE && !(s->scene.map_open) ? 210 : 100);
+    const int radius = ((*s->sm)["controlsState"].getControlsState().getAlertSize() == cereal::ControlsState::AlertSize::NONE && !(s->scene.map_open) ? 190 : 100);
     const int right_x = (s->scene.measure_cur_num_slots > 0 
                           ? s->scene.measure_slots_rect.x - 4 * radius / 3
                           : 4 * s->fb_w / 5);
@@ -1753,6 +1765,8 @@ static void draw_lane_pos_buttons(UIState *s) {
       nvgStrokeColor(s->vg, s->scene.auto_lane_pos_active ? COLOR_GRACE_BLUE_ALPHA(100) : COLOR_WHITE_ALPHA(200));
       nvgStroke(s->vg);
     }
+
+
   }
 }
 
