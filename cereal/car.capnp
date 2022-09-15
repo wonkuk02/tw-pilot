@@ -343,18 +343,22 @@ struct CarControl {
   cruiseControl @4 :CruiseControl;
   hudControl @5 :HUDControl;
 
-  sccSmoother @10 :SccSmoother;
+  onePedalAccelOutput @10 :Float32;
+  onePedalAccelInput @11 :Float32;
+  onePedalP @12 :Float32;
+  onePedalI @13 :Float32;
+  onePedalD @14 :Float32;
+  onePedalF @15 :Float32;
+
+  sccSmoother @16 :SccSmoother;
 
   struct SccSmoother {
     longControl @0:Bool;
-
     logMessage @1 :Text;
-
-    roadLimitSpeedActive @2 :Int32;
-    roadLimitSpeed @3 :UInt32;
-    roadLimitSpeedLeftDist @4 :UInt32;
-
-    autoTrGap @5 :UInt32;
+    # roadLimitSpeedActive @2 :Int32;
+    # roadLimitSpeed @3 :UInt32;
+    # roadLimitSpeedLeftDist @4 :UInt32;
+    autoTrGap @2 :UInt32;
   }
 
   struct Actuators {

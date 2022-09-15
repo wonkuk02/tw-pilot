@@ -32,9 +32,10 @@ from selfdrive.locationd.calibrationd import Calibration
 from selfdrive.modeld.constants import T_IDXS
 from selfdrive.hardware import HARDWARE, TICI, EON
 from selfdrive.manager.process_config import managed_processes
-from selfdrive.road_speed_limiter import road_speed_limiter_get_max_speed, road_speed_limiter_get_active
+from selfdrive.road_speed_limiter import road_speed_limiter_get_max_speed, road_speed_limiter_get_active, \
+  get_road_speed_limiter
 
-MIN_CURVE_SPEED = 40. * CV.KPH_TO_MS
+MIN_CURVE_SPEED = 45. * CV.KPH_TO_MS
 
 LDW_MIN_SPEED = 30 * CV.MPH_TO_MS
 LANE_DEPARTURE_THRESHOLD = 0.1
@@ -42,7 +43,7 @@ STEER_ANGLE_SATURATION_TIMEOUT = 1.0 / DT_CTRL
 STEER_ANGLE_SATURATION_THRESHOLD = 2.5  # Degrees
 
 MAX_ABS_PITCH = 0.314 # 20% grade = 18 degrees = pi/10 radians
-MAX_ABS_PRED_PITCH_DELTA = MAX_ABS_PITCH * 0.5
+MAX_ABS_PRED_PITCH_DELTA = MAX_ABS_PITCH * 0.5 * DT_CTRL # 10% grade per second
 
 SIMULATION = "SIMULATION" in os.environ
 NOSENSOR = "NOSENSOR" in os.environ
@@ -517,12 +518,14 @@ class Controls:
       self.v_cruise_kph = 0
     self.CI.CS.v_cruise_kph = self.v_cruise_kph
 
-    limit_speed, self.road_limit_speed, self.road_limit_left_dist, first_started, limit_log = road_speed_limiter_get_max_speed(CS, self.v_cruise_kph)
+    # limit_speed, self.road_limit_speed, self.road_limit_left_dist, first_started, limit_log = road_speed_limiter_get_max_speed(CS, self.v_cruise_kph)
+    road_speed_limiter = get_road_speed_limiter()
+    apply_limit_speed, road_limit_speed, left_dist, first_started, limit_log = road_speed_limiter.get_max_speed(CS, self.v_cruise_kph)
 
-    if limit_speed > 20:
-      self.v_cruise_kph_limit = min(limit_speed, self.v_cruise_kph)
+    if apply_limit_speed > 20:
+      self.v_cruise_kph_limit = min(apply_limit_speed, self.v_cruise_kph)
 
-      if limit_speed < CS.vEgo * CV.MS_TO_KPH:
+      if apply_limit_speed < CS.vEgo * CV.MS_TO_KPH:
         self.events.add(EventName.slowingDownSpeedSound)
 
     else:
@@ -554,7 +557,7 @@ class Controls:
         if self.state == State.enabled:
           if self.events.any(ET.SOFT_DISABLE):
             self.state = State.softDisabling
-            self.soft_disable_timer = int(0.5 / DT_CTRL)
+            self.soft_disable_timer = 300   # 3s
             self.current_alert_types.append(ET.SOFT_DISABLE)
 
         # SOFT DISABLING
@@ -613,7 +616,12 @@ class Controls:
     if self.sm.updated['liveParameters'] and len(self.sm['modelV2'].orientation.y) == TRAJECTORY_SIZE:
       future_pitch_diff = clip(interp(self.CI.CS.pitch_future_time, T_IDXS, self.sm['modelV2'].orientation.y), -MAX_ABS_PRED_PITCH_DELTA, MAX_ABS_PRED_PITCH_DELTA)
       self.CI.CS.pitch_raw = self.sm['liveParameters'].pitch + future_pitch_diff
-      
+    
+    self.CI.CS.coasting_long_plan = long_plan.longitudinalPlanSource
+    self.CI.CS.coasting_lead_d = long_plan.leadDist
+    self.CI.CS.coasting_lead_v = long_plan.leadV
+    self.CI.CS.tr = long_plan.desiredFollowDistance
+    self.CI.CS.lead_accel = long_plan.leadAccelPlanned
 
     actuators = car.CarControl.Actuators.new_message()
     actuators.longControlState = self.LoC.long_control_state
@@ -641,12 +649,6 @@ class Controls:
       if self.sm.updated['liveParameters']:
         self.pitch = apply_deadzone(self.sm['liveParameters'].pitchFutureLong, self.pitch_accel_deadzone)
       actuators.accelPitchCompensated = actuators.accel + ACCELERATION_DUE_TO_GRAVITY * math.sin(self.pitch)
-
-      
-      self.CI.CS.coasting_long_plan = long_plan.longitudinalPlanSource
-      self.CI.CS.coasting_lead_d = long_plan.leadDist
-      self.CI.CS.coasting_lead_v = long_plan.leadV
-      self.CI.CS.tr = long_plan.desiredFollowDistance
 
       # Steering PID loop and lateral MPC
       t_since_plan = (self.sm.frame - self.sm.rcv_frame['lateralPlan']) * DT_CTRL
@@ -717,9 +719,9 @@ class Controls:
 
     CC.cruiseControl.override = True
     CC.cruiseControl.cancel = not self.CP.pcmCruise or (not self.enabled and CS.cruiseState.enabled)
-    CC.sccSmoother.roadLimitSpeedActive = road_speed_limiter_get_active()
-    CC.sccSmoother.roadLimitSpeed = self.road_limit_speed
-    CC.sccSmoother.roadLimitSpeedLeftDist = self.road_limit_left_dist
+    # CC.sccSmoother.roadLimitSpeedActive = road_speed_limiter_get_active()
+    # CC.sccSmoother.roadLimitSpeed = self.road_limit_speed
+    # CC.sccSmoother.roadLimitSpeedLeftDist = self.road_limit_left_dist
     if self.joystick_mode and self.sm.rcv_frame['testJoystick'] > 0 and self.sm['testJoystick'].buttons[0]:
       CC.cruiseControl.cancel = True
 
@@ -731,6 +733,13 @@ class Controls:
     CC.cruiseControl.speedOverride = float(speed_override if self.CP.pcmCruise else 0.0)
     CC.cruiseControl.accelOverride = float(self.CI.calc_accel_override(CS.aEgo, self.a_target,
                                                                        CS.vEgo, self.v_target))
+    
+    CC.onePedalAccelOutput = float(self.CI.CC.one_pedal_decel)
+    CC.onePedalAccelInput = float(self.CI.CC.one_pedal_decel_in)
+    CC.onePedalP = float(self.CI.CC.one_pedal_pid.p)
+    CC.onePedalI = float(self.CI.CC.one_pedal_pid.i)
+    CC.onePedalD = float(self.CI.CC.one_pedal_pid.d)
+    CC.onePedalF = float(self.CI.CC.one_pedal_pid.f)
 
     CC.hudControl.setSpeed = float(self.v_cruise_kph_limit * CV.KPH_TO_MS)
     CC.hudControl.speedVisible = self.enabled
@@ -810,8 +819,6 @@ class Controls:
     controlsState.canErrorCounter = self.can_error_counter
     controlsState.sccStockCamAct = self.sccStockCamAct
     controlsState.sccStockCamStatus = self.sccStockCamStatus
-    # controlsState.roadLimitSpeed = self.road_limit_speed
-    # controlsState.roadLimitSpeedLeftDist = self.road_limit_left_dist
 
     lat_tuning = self.CP.lateralTuning.which()
     if self.joystick_mode:

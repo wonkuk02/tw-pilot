@@ -73,7 +73,19 @@ TogglesPanel::TogglesPanel(QWidget *parent) : QWidget(parent) {
                                   "차선을 무시하고 사람이 하는 것처럼 운전한다.",
                                   "../assets/offroad/icon_road.png",
                                   this));
+
+  toggles.append(new ParamControl("EVConsumptionReset",
+                                  "Reset trip/EV metrics",
+                                  "Upon the next vehicle start, reset the distance travelled and EV consumption and efficiency trip and 5mi/8km metrics to 0.",
+                                  "../assets/offroad/icon_calibration.png",
+                                  this));
   
+  toggles.append(new ParamControl("LongRangeLeadsEnabled",
+                                  "Longer-range lead detection (alpha)",
+                                  "Use the much longer-range lead detection ability of the car's LKA camera to detect leads up to 40\% farther than stock openpilot.  This also allows for 10\% longer range detection using radar.",
+                                  "../assets/offroad/icon_plus.png",
+                                  this));
+
   toggles.append(new ParamControl("EnableTorqueControl",
                                   "Enable \"torque\" steering control",
                                   "(재시동해야 반영됨) 목표 조향각도 보다 목표 수평가속도에 기반한 토크조향.",
@@ -173,11 +185,6 @@ TogglesPanel::TogglesPanel(QWidget *parent) : QWidget(parent) {
   toggles.append(new ParamControl("OnePedalMode",
                                   "[GM] One-pedal mode (tap me)",
                                   "\"Disable disengage on gas\"옵션과 연동됨. OP가 커브길과 앞차량 추종시 조향과 브레이크를 계속하는 동안 -조정가능한 제동옵션이 포함된- 가속페달을 사용하여 속도를 제어할 수 있습니다. 활성화하려면 One-pedal engage on gas를 참조 일반 크루즈운행으로 돌아가려면 SET, RESUME 버튼을 누르십시오. ② 페달 아이콘을 눌러 원페달모드로 전환합니다 아래 참조 one-pedal 모드가 활성화되면 차량이 거리 표시기를 따르고 페달 아이콘 색상이 1/2/3 = (⚫️)/🟢/🟠/🔴 = (regen/engine)/light/moderate/heavy braking 제동 중임을 나타냅니다. ③ 추종거리 버튼을 눌러 light/moderate braking 사이를 전환하게 합니다; 제동 사이를 전환하고, heavy braking을 유지하십시오. ④ 페달 아이콘을 탭하거나 추종 거리 버튼을 사용하여, 마찰 브레이킹 🟢/🟠/🔴 및 리젠/엔진⚫제동 사이를 전환합니다; 한번 탭하면 마찰 제동이 활성화되고, 두번 탭하면 가속페달을 밟고 있거나, 정차중에는 마찰 마찰 제동이 비활성화됩니다.",
-                                  "../assets/offroad/icon_car_pedal.png",
-                                  this));
-  toggles.append(new ParamControl("OnePedalModeSimple",
-                                  "[GM] One-pedal pro brakes ⚠️",
-                                  "원페달모드에서는 여타의 오파제동이 정지됩니다(중요!!!) 선두 차량 뒤에서 속도를 늦추거나 멈추거나 커브를 돌 때 속도를 늦추기 위해 자동으로 추가 제동이 걸리지 않습니다. 사용자는 추종 버튼을 퉁해 원페달 브레이크를 사용하거나 실제 브레이크를 사용할 책임이 있습니다.",
                                   "../assets/offroad/icon_car_pedal.png",
                                   this));
   toggles.append(new ParamControl("OnePedalDLCoasting",
