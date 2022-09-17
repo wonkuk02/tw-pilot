@@ -1419,7 +1419,7 @@ static void ui_draw_vision_speed(UIState *s) {
 static void ui_draw_speed_limit(UIState *s)
 {
     const UIScene *scene = &s->scene;
-    const SubMaster &sm = *(uiState()->sm);
+    SubMaster &sm = *(s->sm);
     // cereal::CarControl::SccSmoother::Reader scc_smoother = scene->car_control.getSccSmoother();
     auto roadLimitSpeed = sm["roadLimitSpeed"].getRoadLimitSpeed();
 
