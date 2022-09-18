@@ -58,14 +58,16 @@ def manager_init():
     ("ScreenDimMode", "2"),
     ("AccelModeButton", "0"),
     ("AccelMode", "0"),
+    ("EVDriveTrainEfficiency", "1"),
     ("EVConsumptionReset", "0"),
     ("EVConsumption5Mi", "0"),
     ("EVConsumptionTripkWh", "0"),
     ("EVConsumptionTripDistance", "0"),
     ("EndToEndToggle", "1"),
     ("EnableTorqueControl", "0"),
-    ("LanelessMode", "1"),
+    ("LanelessMode", "2"),
     ("LanePositionEnabled", "0"),
+    ("AutoAutoLanePosition", "0"),
     ("LongRangeLeadsEnabled", "0"),
     ("AutoLanePositionActive", "0"),
     ("LanePosition", "0"),
@@ -90,16 +92,16 @@ def manager_init():
     ("LowOverheadMode", "0"),
     ("FPVolt", "0"),
     ("MeasureConfigNum", "0"),
-    ("MeasureSlot00", "12"), # bearing 
-    ("MeasureSlot01", "11"), # altitude 
-    ("MeasureSlot02", "14"), # percent grade
-    ("MeasureSlot03", "9"), # Acceleration
-    ("MeasureSlot04", "6"), # engine RPM + coolant temp F
-    ("MeasureSlot05", "34"), # Trip EV efficiency 
-    ("MeasureSlot06", "33"), # 5mi EV efficiency
-    ("MeasureSlot07", "38"), # Instantaneous EV efficiency/consuption
-    ("MeasureSlot08", "53"),# GPS accuracy
-    ("MeasureSlot09", "40"),# device cpu percent and temp °C
+    ("MeasureSlot00", "51"), # CPU점유율과 온도 °C
+    ("MeasureSlot01", "5"), # 엔진RPM + 냉각수 온도
+    ("MeasureSlot02", "21"), # 고도
+    ("MeasureSlot03", "64"), # GPS정확도, 위성수
+    ("MeasureSlot04", "1"), # 위도
+    ("MeasureSlot05", "22"), # 핸들:경로 비교각
+    ("MeasureSlot06", "2"), # 조향각차이
+    ("MeasureSlot07", "10"), # 횡가속도
+    ("MeasureSlot08", "33"), # 추돌회피거리
+    ("MeasureSlot09", "27"), # 차선 폭(m)
   ]
   if not PC:
     default_params.append(("LastUpdateTime", datetime.datetime.utcnow().isoformat().encode('utf8')))

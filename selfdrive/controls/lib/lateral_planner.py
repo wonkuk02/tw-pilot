@@ -2,11 +2,11 @@ import math
 import numpy as np
 from common.realtime import sec_since_boot, DT_MDL
 from common.numpy_fast import interp
-from common.params import Params
+from common.params import Params, put_nonblocking
 from selfdrive.swaglog import cloudlog
 from selfdrive.controls.lib.lateral_mpc import libmpc_py
 from selfdrive.controls.lib.drive_helpers import CONTROL_N, MPC_COST_LAT, LAT_MPC_N, CAR_ROTATION_RADIUS
-from selfdrive.controls.lib.lane_planner import LanePlanner, TRAJECTORY_SIZE
+from selfdrive.controls.lib.lane_planner import LanePlanner, TRAJECTORY_SIZE, AUTO_AUTO_LANE_MODE
 from selfdrive.config import Conversions as CV
 import cereal.messaging as messaging
 from cereal import log
@@ -63,6 +63,7 @@ class LateralPlanner():
     self.nudgeless_blinker_press_t = 0.
 
     self.auto_lane_pos_active = False
+    self.auto_auto_lane_pos_enabled = self._params.get_bool("AutoAutoLanePosition")
     
     self.lane_change_state = LaneChangeState.off
     self.prev_lane_change_state = self.lane_change_state
@@ -106,12 +107,20 @@ class LateralPlanner():
       self.lane_pos = float(Params().get("LanePosition", encoding="utf8"))
       self.nudgeless_enabled = self._params.get_bool("NudgelessLaneChange")
       self.auto_lane_pos_active = self._params.get_bool("AutoLanePositionActive")
+      self.auto_auto_lane_pos_enabled = self._params.get_bool("AutoAutoLanePosition")
       self.second = 0.0
     v_ego = sm['carState'].vEgo
     active = sm['controlsState'].active
     measured_curvature = sm['controlsState'].curvature
 
     md = sm['modelV2']
+    activate_auto_lane_pos = self.auto_auto_lane_pos_enabled and self.LP.lane_offset.do_auto_enable(int(sm['liveMapData'].currentRoadType))
+    if activate_auto_lane_pos == AUTO_AUTO_LANE_MODE.ENGAGE:
+      self._params.put_bool("AutoLanePositionActive", True)
+      self.auto_lane_pos_active = True
+    elif activate_auto_lane_pos == AUTO_AUTO_LANE_MODE.DISENGAGE:
+      self._params.put_bool("AutoLanePositionActive", False)
+      self.auto_lane_pos_active = False
     self.LP.parse_model(sm['modelV2'], self.lane_pos, sm, self.auto_lane_pos_active)
     if len(md.position.x) == TRAJECTORY_SIZE and len(md.orientation.x) == TRAJECTORY_SIZE:
       self.path_xyz = np.column_stack([md.position.x, md.position.y, md.position.z])
@@ -353,12 +362,12 @@ class LateralPlanner():
     if self.auto_lane_pos_active:
       if self.LP.lane_offset._lane_pos_auto == -1. and self.lane_pos != -1.:
         self.lane_pos = -1.
-        Params().put("LanePosition", "-1")
+        put_nonblocking("LanePosition", "-1")
       elif self.LP.lane_offset._lane_pos_auto == 1. and self.lane_pos != 1.:
         self.lane_pos = 1.
-        Params().put("LanePosition", "1")
+        put_nonblocking("LanePosition", "1")
       elif self.LP.lane_offset._lane_pos_auto == 0. and self.lane_pos != 0.:
         self.lane_pos = 0.
-        Params().put("LanePosition", "0")
+        put_nonblocking("LanePosition", "0")
 
     pm.send('lateralPlan', plan_send)

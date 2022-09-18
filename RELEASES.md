@@ -1,3 +1,34 @@
+Version tw-0.8.12-7_tws (2022-09-15)
+========================
+ * NEW: 7 UI metrics: Drag (resistance) force, drag power, acceleration force (F=ma), acceleration power, drive power (drag + accel + losses), ICE power (for volt when ice is on; untested!), EV drivetrain (plus other stuff) efficiency (power from battery vs drive power)
+ * IMPROVED: dynamic steer rate limit now scales with future curvature, so no more excessive correction to potholes at low speeds on straights
+ * NEW: Auto automatic lane position when on highways/freeways and 38mph+ [optional]
+ * NEW: UI metric: hybrid EV efficiency/consumption (flips based on sign of consumption)
+ * FIXED: UI metric: EV trip and 5mi efficiency and consumption metrics are correctly preserved between drives
+ * IMPROVED: use dynamic speed-based max brake command value for guaranteed max brake of -3.5m/s^2 as originally intended
+  * Old method produced -3.5m/s^2 only with EV regen included. Now that value is maintained even below regen speeds.
+ * when steering paused with LKA button, stop coloring path
+ * draw transparent path
+ * long range leads now indicated by blue dot
+ * one pedal mode: improved braking profiles and smoother transitions
+ * "communications error" alert now lists the process(es) that failed
+
+
+Version tw-0.8.12-6_twd (2022-09-09)
+========================
+ * NEW: Bolt EUV support
+ * NEW: [GM w/ ASCM] Include LKA camera vision data with radar for lead tracking
+  * Now both vision and radar have to fail in order for a radar fault to be thrown!
+  * Slightly better accuracy with lead tracking, but otherwise you won't notice a difference
+ * NEW: [toggle] Longer-range lead-detection! (use with caution and report problems, please!)
+  * Before, OP only considered a lead if it agreed with the model, but now it will use the long range voacc information, compared to model-predicted path and lanelines, in order to detect leads up to 600ft+ away
+ * NEW: UI metrics: EV efficiency (three metrics: instantaneous, 5mi, and trip efficiency), and EV consumption (another three for instant, 5mi, and trip)
+  * Use the "Reset EV consumption metrics" toggle to reset values back to zero.
+ * IMPROVED: UI metrics: additional 2-column layouts
+ * IMPROVED: Completely redone one-pedal mode logic. Smoother and more consistent braking.
+  * No more mixed openpilot + one-pedal braking: you're in charge of braking!
+
+
 Version tw-0.8.12-5_twd (2022-08-04)
 ========================
  * NEW: auto mode for adjustable lane position
@@ -17,13 +48,14 @@ Version tw-0.8.12-5_twd (2022-08-04)
   * It works by delaying the autoresume until the desired acceleration is more than enough to overcome the gravitational acceleration
  * IMPROVED: vision/map curve braking now go faster on interchanges (under 55mph, otherwise normal braking), and map braking goes faster also on interstate and state highways
  * IMPROVED: map curve braking, on freeways, will now only brake for 35mph+ curves, to prevent harsh braking resulting from false positives
+ * IMPROVED: all curve braking now indicated using triangle speed sign at left of screen.
  * IMPROVED: speed limit control now shows US style speed limit sign (disable in toggles)
  * IMPROVED: improved Volt lateral performance
  * IMPROVED: improved low-speed lateral performance using dynamic steer rate limits
  * IMPROVED: smooth in acceleration after a lead turns right in front of you
  * IMPROVED: dynamic gas/brake threshold for more accurate gm long control
 
-Version tw-0.8.12-4_twd (2022-07-20)
+Version tw-0.8.12-4_tws (2022-07-20)
 ========================
  * NEW: Added "resume required" alert when lead car pulls away 
  * NEW: When map-curve braking or speed-limit control are enabled, current signal strength is shown above max speed indicator onroad
@@ -48,7 +80,7 @@ Version tw-0.8.12-4_twd (2022-07-20)
  * IMPROVED: gas/brake pitch-based adjust gets a 1% grade deadzone
  * IMPROVED: dynamic lane profile now switches to laneless before entering curves
 
-Version tw-0.8.12-3_twd (2022-06-29)
+Version tw-0.8.12-3_tws (2022-06-29)
 ========================
  * IMPROVED: Vision and/or map-based curve braking separately toggleable by tapping steering wheel icon
   * Tap to cycle between no-curve-braking/vision-only/vision+map
@@ -60,17 +92,7 @@ Version tw-0.8.12-3_twd (2022-06-29)
   * Pitch is calculated using current and predicted pitch to provide a smoothed version of the current pitch with no delay!
  * IMPROVED: gm better gas/brake lookup tables so that the car produces the accel/decel openpilot thinks it will for a given gas/brake command (qadmus again!!!)
 
-Version tw-0.8.12-2_twd (2022-06-04)
-========================
- * NEW: [optional w/ toggle] print lead car info
-   * Resolved occasional double-printing of info
- * RE-IMPROVED: Vision-based curve braking now includes roll-compensation in its calculations
-   * For example, it will brake less on a banked curve
- * RE-IMPROVED: Volt torque steering porformance!
-   * With custom feedforward fit from volt driving data like the traditional PIDF tune
- * IMPROVED: Traditional PIDF tune gets updated custom FF (I can't tell whether it or torque is better; likely a mater of preference; try them both!)
-
-Version tw-0.8.12-1_twd (2022-04-27)
+Version tw-0.8.12-1_tws (2022-04-27)
 ========================
  * NEW: [optional w/ toggle] Torque-based steering control for Volt and Acadia
  * IMPROVED: [Volt] inproved (non-torque-based) steering performance too!
