@@ -96,8 +96,8 @@ def manager_init():
     ("MeasureSlot01", "5"), # 엔진RPM + 냉각수 온도
     ("MeasureSlot02", "21"), # 고도
     ("MeasureSlot03", "64"), # GPS정확도, 위성수
-    ("MeasureSlot04", "1"), # 위도
-    ("MeasureSlot05", "22"), # 핸들:경로 비교각
+    ("MeasureSlot04", "22"), # 위도
+    ("MeasureSlot05", "1"), # 핸들:경로 비교각
     ("MeasureSlot06", "2"), # 조향각차이
     ("MeasureSlot07", "10"), # 횡가속도
     ("MeasureSlot08", "33"), # 추돌회피거리
