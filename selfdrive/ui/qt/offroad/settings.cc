@@ -123,7 +123,7 @@ TogglesPanel::TogglesPanel(QWidget *parent) : QWidget(parent) {
                                   "../assets/offroad/icon_speed_limit_percent.png",
                                   this));
   toggles.append(new ParamControl("StockSpeedAdjust",
-                                  "순정 크루즈속와 반대로 설정",
+                                  "순정 크루즈속도와 반대로 설정",
                                   "순정동작의 반대로, 가속/감속 버튼을 짧게/길게 누르면 5mph/1mph씩 변경됩니다.",
                                   "../assets/offroad/icon_stock_adjust_speed.png",
                                   this));
@@ -139,7 +139,12 @@ TogglesPanel::TogglesPanel(QWidget *parent) : QWidget(parent) {
                                   this));
   toggles.append(new ParamControl("LanePositionEnabled",
                                   "차선위치 조정",
-                                  "일시적으로 화살표로 차선위치 조정이 가능함.",
+                                  "일시적으로 화살표로 차선위치 조정이 가능함. 왼쪽 또는 오른쪽 끝차에서 주행하고 있을 때 옆차와 추돌을 피하기 위한 자동모드는 화살표 두개를 차레로 투르면 활성화 됨.",
+                                  "../assets/offroad/icon_road.png",
+                                  this));
+  toggles.append(new ParamControl("AutoAutoLanePosition",
+                                  "36Kmh이상에서 차선위치 자동조정",
+                                  "고속도로(시속36Kmh이상)나 고속도로에 진입할 때 자동으로 차선 위치를 조정합니다. 위 차선위치조정 토글이 활성화되어야 합니다. 차가 왼쪽 혹은 오른쪽 끝차선을 주행하고 있을 때, 옆차와의 간격을 자동으로 멀어지게 함.",
                                   "../assets/offroad/icon_road.png",
                                   this));
   toggles.append(new ParamControl("AccelModeButton",

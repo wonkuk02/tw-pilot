@@ -376,7 +376,7 @@ static void update_state(UIState *s) {
     float cur_dist = std::abs(scene.car_state.getVEgo() * (t - scene.ev_eff_last_time));
     
     scene.ev_eff_total_dist += cur_dist;
-    float cur_kW = -scene.car_state.getHvbWattage();
+    float cur_kW = -scene.car_state.getHvbWattage() * 0.001;
     float cur_kWh = cur_kW * (t - scene.ev_eff_last_time) * 2.8e-4; // [kJ converted to kWh]
     scene.ev_eff_total_kWh += cur_kWh;
 
@@ -515,6 +515,7 @@ static void update_state(UIState *s) {
     scene.lateralPlan.lProb = data.getLProb();
     scene.lateralPlan.rProb = data.getRProb();
     scene.lateralPlan.lanelessModeStatus = data.getLanelessMode();
+    scene.auto_lane_pos_active = data.getAutoLanePositionActive();
   }
   if (sm.updated("gpsLocationExternal")) {
     auto data = sm["gpsLocationExternal"].getGpsLocationExternal();
