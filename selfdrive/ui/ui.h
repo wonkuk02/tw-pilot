@@ -154,6 +154,7 @@ typedef struct {
 } line_vertices_data;
 
 typedef enum UIMeasure { //rearrange here to adjust order when cycling measures
+  // Vehicle info
   STEERING_ANGLE = 0,
   DESIRED_STEERING_ANGLE,
   STEERING_ANGLE_ERROR,
@@ -164,7 +165,18 @@ typedef enum UIMeasure { //rearrange here to adjust order when cycling measures
   COOLANT_TEMPC,
   COOLANT_TEMPF,
   ACCELERATION,
-  LAT_ACCEL,//JERK,
+  LAT_ACCEL,//JERK,10
+  DRAG_FORCE,
+  DRAG_POWER,
+  DRAG_POWER_HP,
+  ACCEL_FORCE,
+  ACCEL_POWER,
+  ACCEL_POWER_HP,
+  DRIVE_POWER,
+  DRIVE_POWER_HP,
+  ICE_POWER,
+  ICE_POWER_HP, //20
+  // Location/road info
   ALTITUDE,
   BEARING,
   PERCENT_GRADE,
@@ -175,7 +187,7 @@ typedef enum UIMeasure { //rearrange here to adjust order when cycling measures
   DISTANCE_TRAVELLED,
   // Lead info
   FOLLOW_LEVEL,
-  LEAD_TTC,
+  LEAD_TTC, //30
   LEAD_DISTANCE_LENGTH,
   LEAD_DISTANCE_TIME,
   LEAD_DESIRED_DISTANCE_LENGTH,
@@ -186,7 +198,7 @@ typedef enum UIMeasure { //rearrange here to adjust order when cycling measures
   // EV info
   HVB_VOLTAGE,
   HVB_CURRENT,
-  HVB_WATTAGE,
+  HVB_WATTAGE, //40
   HVB_WATTVOLT,
   EV_EFF_NOW,
   EV_EFF_RECENT,
@@ -195,8 +207,9 @@ typedef enum UIMeasure { //rearrange here to adjust order when cycling measures
   EV_CONSUM_RECENT,
   EV_CONSUM_TRIP,
   EV_BOTH_NOW,
+  EV_OBSERVED_DRIVETRAIN_EFF,
   // Device info
-  CPU_TEMP_AND_PERCENTF,
+  CPU_TEMP_AND_PERCENTF, //50
   CPU_TEMP_AND_PERCENTC,
   CPU_TEMPF,
   CPU_TEMPC,
@@ -206,7 +219,7 @@ typedef enum UIMeasure { //rearrange here to adjust order when cycling measures
   AMBIENT_TEMPF,
   AMBIENT_TEMPC,
   FANSPEED_PERCENT,
-  FANSPEED_RPM,
+  FANSPEED_RPM, //60
   MEMORY_USAGE_PERCENT,
   FREESPACE_STORAGE,
   DEVICE_BATTERY,
@@ -322,7 +335,7 @@ typedef struct UIScene {
   float lead_d_rel, lead_v_rel, lead_v;
 
   // EV efficiency
-  float ev_eff_distances[2] = {30.f / 20.f, 8046.f / 20.f};
+  float ev_eff_distances[2] = {10.f, 8046.f};
   float ev_eff_distances_recip[2] = {1.f/ev_eff_distances[0], 1.f/ev_eff_distances[1]}; // [m] denominator for weighted average weights
   float ev_eff_stopped_kWh = 0.; // [kWh]
   float ev_eff_total_kWh = 0.; // [kWh]

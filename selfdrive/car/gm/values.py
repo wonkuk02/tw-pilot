@@ -12,9 +12,9 @@ class CarControllerParams():
     # self.STEER_DELTA_UP = 14          # ~1s time to peak torque (255/50hz/1s)
     # self.STEER_DELTA_DOWN = 34       # ~0.4s from peak torque to zero
     self.STEER_DELTA_UP_BP = [10., 20.] # [m/s]
-    self.STEER_DELTA_UP_V = [12., 7.] # [steer command]
+    self.STEER_DELTA_UP_V = [15., 7.] # [steer command]
     self.STEER_DELTA_DOWN_BP = [10., 20.] # [m/s]
-    self.STEER_DELTA_DOWN_V = [29., 17.] # [steer command]
+    self.STEER_DELTA_DOWN_V = [32., 17.] # [steer command]
     self.MIN_STEER_SPEED = 3.
     self.STEER_DRIVER_ALLOWANCE = 50   # allowed driver torque before start limiting
     self.STEER_DRIVER_MULTIPLIER = 4   # weight driver torque heavily
@@ -29,7 +29,7 @@ class CarControllerParams():
     # pedal lookups, only for Volt
     self.MAX_GAS = 4095
     self.ZERO_GAS = 2048
-    self.MAX_BRAKE = 350             # Should be around 3.5m/s^2, including regen
+    self.MAX_BRAKE = 350             # Should be around 3.5m/s^2, including regen, at speed, and 2.5 below regen speed, so we'll add in the difference
 
     self.ACCEL_MAX = 3.0 # m/s^2 (max accel of sport profile in longitudinal_planner.py)
 
@@ -38,8 +38,7 @@ class CarControllerParams():
     # to apply some more braking if we're on a downhill slope.
     # Our controller should still keep the 2 second average above
     # -3.5 m/s^2 as per planner limits
-    # Decreased to -2.5 (by 1/1.75) based on response of aEgo to brake command
-    self.ACCEL_MIN = -2.5 # m/s^2
+    self.ACCEL_MIN = -3.5 # m/s^2
 
     self.MAX_ACC_REGEN = 1404  # ACC Regen braking is slightly less powerful than max regen paddle
     self.GAS_LOOKUP_BP = [-1.1, 0., self.ACCEL_MAX]
@@ -48,23 +47,35 @@ class CarControllerParams():
     self.BRAKE_LOOKUP_V = [self.MAX_BRAKE, 0]
     
     self.v_ego = 100.
+    self.future_curvature = 0.
+    self.MIN_STEER_DELTA_UP = min(self.STEER_DELTA_UP_V)
+    self.MIN_STEER_DELTA_DOWN = min(self.STEER_DELTA_DOWN_V)
+    self.CURVATURE_STEER_DELTA_FACTOR_BP = [0.002, 0.015] # [rad/meter]
+    self.CURVATURE_STEER_DELTA_FACTOR_V = [0., 1.] # factor of higher torque rate limit used. when it's 1, the higher limit is used, or the stock value when 0
 
   @property
   def STEER_DELTA_UP(self):
-    return int(round(interp(self.v_ego, self.STEER_DELTA_UP_BP, self.STEER_DELTA_UP_V)))
+    limit = interp(self.v_ego, self.STEER_DELTA_UP_BP, self.STEER_DELTA_UP_V)
+    k = interp(self.future_curvature, self.CURVATURE_STEER_DELTA_FACTOR_BP, self.CURVATURE_STEER_DELTA_FACTOR_V)
+    return int(round(k * limit + (1 - k) * self.MIN_STEER_DELTA_UP))
   
   @property
   def STEER_DELTA_DOWN(self):
-    return int(round(interp(self.v_ego, self.STEER_DELTA_DOWN_BP, self.STEER_DELTA_DOWN_V)))
+    limit = interp(self.v_ego, self.STEER_DELTA_DOWN_BP, self.STEER_DELTA_DOWN_V)
+    k = interp(self.future_curvature, self.CURVATURE_STEER_DELTA_FACTOR_BP, self.CURVATURE_STEER_DELTA_FACTOR_V)
+    return int(round(k * limit + (1 - k) * self.MIN_STEER_DELTA_DOWN))
     
     # determined by letting Volt regen to a stop in L gear from 75mph
-  EV_GAS_BRAKE_THRESHOLD_BP = [0.5, 0.6, 0.7, 0.8, 0.9, 1.0, 1.1, 1.2, 1.29, 1.52, 1.55, 1.6, 1.7, 1.8, 2.0, 2.2, 2.5, 5.52, 9.6, 20.5, 23.5, 35.0] # [m/s]
-  EV_GAS_BRAKE_THRESHOLD_V = [0.678, 0.67, 0.63, 0.56, 0.49, 0.38, 0.3, 0.13, 0.0, -0.14, -0.16, -0.18, -0.215, -0.255, -0.32, -0.41, -0.5, -0.72, -0.895, -1.125, -1.145, -1.16] # [m/s^s]
+  EV_GAS_BRAKE_THRESHOLD_BP = [1.2, 1.29, 1.52, 1.55, 1.6, 1.7, 1.8, 2.0, 2.2, 2.5, 5.52, 9.6, 20.5, 23.5, 35.0] # [m/s]
+  EV_GAS_BRAKE_THRESHOLD_V = [0.13, 0.0, -0.14, -0.16, -0.18, -0.215, -0.255, -0.32, -0.41, -0.5, -0.72, -0.895, -1.125, -1.145, -1.16] # [m/s^s]
+  EV_GAS_BRAKE_THRESHOLD_MIN_V = min(EV_GAS_BRAKE_THRESHOLD_V)
   
   def update_gas_brake_threshold(self, v_ego):
     gas_brake_threshold = interp(v_ego, self.EV_GAS_BRAKE_THRESHOLD_BP, self.EV_GAS_BRAKE_THRESHOLD_V)
+    max_brake = int(self.MAX_BRAKE + 68 * (min(0,gas_brake_threshold) - self.EV_GAS_BRAKE_THRESHOLD_MIN_V)) # results in max brake command of around 418, based on a brake cmd = 350 test from 55mph to 0
     self.GAS_LOOKUP_BP = [gas_brake_threshold, 0., self.ACCEL_MAX]
     self.BRAKE_LOOKUP_BP = [self.ACCEL_MIN, gas_brake_threshold]
+    self.BRAKE_LOOKUP_V = [max_brake, 0]
     return gas_brake_threshold
 
 class CAR:
