@@ -2062,15 +2062,14 @@ static void ui_draw_speed_limit(UIState *s)
     const UIScene *scene = &s->scene;
     const SubMaster &sm = *(s->sm);
     // cereal::CarControl::SccSmoother::Reader scc_smoother = scene->car_control.getSccSmoother();
-    auto roadLimitSpeed = sm["roadLimitSpeed"].getRoadLimitSpeed();
+    const auto road_limit_speed = sm["roadLimitSpeed"].getRoadLimitSpeed();
 
-    int activeNDA = roadLimitSpeed.getActive();
-
-    int camLimitSpeed = roadLimitSpeed.getCamLimitSpeed();
-    int camLimitSpeedLeftDist = roadLimitSpeed.getCamLimitSpeedLeftDist();
-
-    int sectionLimitSpeed = roadLimitSpeed.getSectionLimitSpeed();
-    int sectionLeftDist = roadLimitSpeed.getSectionLeftDist();
+    int activeNDA = road_limit_speed.getActive();
+    int roadLimitSpeed = road_limit_speed.getRoadLimitSpeed();
+    int camLimitSpeed = road_limit_speed.getCamLimitSpeed();
+    int camLimitSpeedLeftDist = road_limit_speed.getCamLimitSpeedLeftDist();
+    int sectionLimitSpeed = road_limit_speed.getSectionLimitSpeed();
+    int sectionLeftDist = road_limit_speed.getSectionLeftDist();
 
     int limit_speed = 0;
     int left_dist = 0;
@@ -2138,6 +2137,11 @@ static void ui_draw_speed_limit(UIState *s)
           snprintf(str, sizeof(str), "%dm", left_dist);
 
         nvgText(s->vg, x+w/2, y+h, str, NULL);
+    }else if(roadLimitSpeed > 0 && roadLimitSpeed < 200) {
+      nvgFontSize(s->vg, 75);
+      sprintf(str, sizeof(str), "%d", roadLimitSpeed);
+      nvgText(s->vg, x+w/2, y+h, str, NULL);
+      nvgTextAlign(s->vg, NVG_ALIGN_CENTER | NVG_ALIGN_MIDDLE);
     }
 }
 

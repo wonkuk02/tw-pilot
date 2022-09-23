@@ -143,7 +143,7 @@ TogglesPanel::TogglesPanel(QWidget *parent) : QWidget(parent) {
                                   "../assets/offroad/icon_road.png",
                                   this));
   toggles.append(new ParamControl("AutoAutoLanePosition",
-                                  "고속도로(현재는 36Kmh)에서 차선위치 자동조정",
+                                  "36Kmh이상에서 차선위치 자동조정",
                                   "고속도로(시속36Kmh이상)나 고속도로에 진입할 때 자동으로 차선 위치를 조정합니다. 위 차선위치조정 토글이 활성화되어야 합니다. 차가 왼쪽 혹은 오른쪽 끝차선을 주행하고 있을 때, 옆차와의 간격을 자동으로 멀어지게 함.",
                                   "../assets/offroad/icon_road.png",
                                   this));
