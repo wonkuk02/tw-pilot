@@ -6,7 +6,7 @@
   chmod 700 ./selfdrive/manager/custom_dep.py
   chmod 700 ./selfdrive/manager/manager.py
   chmod 700 ./selfdrive/debug/clear_dtc.py
-  cp -f ./installer/MeasureConfigNum ./data/params/d/MeasureConfigNum
+  cp -f ./installer/MeasureConfigNum /data/params/d/MeasureConfigNum
 
   sed -i -e 's/\r$//' ./*.sh
   sed -i -e 's/\r$//' ./selfdrive/*.py
