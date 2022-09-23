@@ -2059,86 +2059,87 @@ static void ui_draw_vision_speed(UIState *s) {
 
 static void ui_draw_speed_limit(UIState *s)
 {
-    const UIScene *scene = &s->scene;
-    const SubMaster &sm = *(s->sm);
-    // cereal::CarControl::SccSmoother::Reader scc_smoother = scene->car_control.getSccSmoother();
-    const auto road_limit_speed = sm["roadLimitSpeed"].getRoadLimitSpeed();
+  const UIScene *scene = &s->scene;
+  const SubMaster &sm = *(s->sm);
+  // cereal::CarControl::SccSmoother::Reader scc_smoother = scene->car_control.getSccSmoother();
+  const auto road_limit_speed = sm["roadLimitSpeed"].getRoadLimitSpeed();
 
-    int activeNDA = road_limit_speed.getActive();
+  int activeNDA = road_limit_speed.getActive();
 
-    int camLimitSpeed = road_limit_speed.getCamLimitSpeed();
-    int camLimitSpeedLeftDist = road_limit_speed.getCamLimitSpeedLeftDist();
+  int camLimitSpeed = road_limit_speed.getCamLimitSpeed();
+  int camLimitSpeedLeftDist = road_limit_speed.getCamLimitSpeedLeftDist();
 
-    int sectionLimitSpeed = road_limit_speed.getSectionLimitSpeed();
-    int sectionLeftDist = road_limit_speed.getSectionLeftDist();
+  int sectionLimitSpeed = road_limit_speed.getSectionLimitSpeed();
+  int sectionLeftDist = road_limit_speed.getSectionLeftDist();
 
-    int limit_speed = 0;
-    int left_dist = 0;
+  int limit_speed = 0;
+  int left_dist = 0;
 
-    if(camLimitSpeed >= 0 && camLimitSpeedLeftDist > 0) {
-      limit_speed = camLimitSpeed;
-      left_dist = camLimitSpeedLeftDist;
-    }
-    else if(sectionLimitSpeed >= 0 && sectionLeftDist > 0) {
-      limit_speed = sectionLimitSpeed;
-      left_dist = sectionLeftDist;
-    }
+  if(camLimitSpeed >= 0 && camLimitSpeedLeftDist > 0) {
+    limit_speed = camLimitSpeed;
+    left_dist = camLimitSpeedLeftDist;
+  }
+  else if(sectionLimitSpeed >= 0 && sectionLeftDist > 0) {
+    limit_speed = sectionLimitSpeed;
+    left_dist = sectionLeftDist;
+  }
 
-    if(activeNDA > 0)
-    {
-        int w = 120;
-        int h = 54;
-        int x = (s->fb_w + (bdr_s*2))/3 - w/2 - bdr_s*4;
-        int y = bdr_s - 20;
+  if(activeNDA > 0)
+  {
+    int w = 120;
+    int h = 54;
+    int x = (s->fb_w + (bdr_s*2))/3 - w/2 - bdr_s*4;
+    int y = bdr_s - 20;
 
-        const char* img = activeNDA == 1 ? "img_nda" : "img_hda";
-        ui_draw_image(s, {x, y, w, h}, img, 1.f);
-    }
-    if(limit_speed > 10 && left_dist > 0)
-    {
-        int w = 180;
-        int h = 180;
-        int x = (s->viz_rect.x + bdr_s + 400);
-        int y = 70;
-        char str[32];
+    const char* img = activeNDA == 1 ? "img_nda" : "img_hda";
+    ui_draw_image(s, {x, y, w, h}, img, 1.f);
+  }
 
-        nvgBeginPath(s->vg);
-        nvgRoundedRect(s->vg, x, y, w, h, 185);
-        nvgStrokeColor(s->vg, nvgRGBA(255, 0, 0, 200));
-        nvgStrokeWidth(s->vg, 15);
-        nvgStroke(s->vg);
+  if(limit_speed > 10 && left_dist > 0)
+  {
+    int w = 180;
+    int h = 180;
+    int x = (s->viz_rect.x + bdr_s + 400);
+    int y = 70;
+    char str[32];
 
-        NVGcolor fillColor = nvgRGBA(0, 0, 0, 50);
-        nvgFillColor(s->vg, fillColor);
-        nvgFill(s->vg);
+    nvgBeginPath(s->vg);
+    nvgRoundedRect(s->vg, x, y, w, h, 185);
+    nvgStrokeColor(s->vg, nvgRGBA(255, 0, 0, 200));
+    nvgStrokeWidth(s->vg, 15);
+    nvgStroke(s->vg);
 
-        nvgFillColor(s->vg, nvgRGBA(255, 255, 255, 250));
+    NVGcolor fillColor = nvgRGBA(0, 0, 0, 50);
+    nvgFillColor(s->vg, fillColor);
+    nvgFill(s->vg);
 
-        nvgFontSize(s->vg, 110);
-        nvgFontFace(s->vg, "sans-bold");
-        nvgTextAlign(s->vg, NVG_ALIGN_CENTER | NVG_ALIGN_MIDDLE);
+    nvgFillColor(s->vg, nvgRGBA(255, 255, 255, 250));
 
-        snprintf(str, sizeof(str), "%d", limit_speed);
-        nvgText(s->vg, x+w/2, y+h/2, str, NULL);
+    nvgFontSize(s->vg, 110);
+    nvgFontFace(s->vg, "sans-bold");
+    nvgTextAlign(s->vg, NVG_ALIGN_CENTER | NVG_ALIGN_MIDDLE);
 
-        nvgBeginPath(s->vg);
-        nvgRect(s->vg, x+w/2-100, y+h-30, 190, 80);
-        NVGcolor squareColor = nvgRGBA(255, 0, 0, 200);
-        nvgFillColor(s->vg, squareColor);
-        nvgFill(s->vg);
-        nvgFillColor(s->vg, nvgRGBA(255, 255, 255, 250));
+    snprintf(str, sizeof(str), "%d", limit_speed);
+    nvgText(s->vg, x+w/2, y+h/2, str, NULL);
 
-        nvgFontSize(s->vg, 86);
-        nvgFontFace(s->vg, "sans-bold");
-        nvgTextAlign(s->vg, NVG_ALIGN_CENTER | NVG_ALIGN_MIDDLE);
+    nvgBeginPath(s->vg);
+    nvgRect(s->vg, x+w/2-100, y+h-30, 190, 80);
+    NVGcolor squareColor = nvgRGBA(255, 0, 0, 200);
+    nvgFillColor(s->vg, squareColor);
+    nvgFill(s->vg);
+    nvgFillColor(s->vg, nvgRGBA(255, 255, 255, 250));
 
-        if(left_dist >= 1000)
-          snprintf(str, sizeof(str), "%.1fkm", left_dist / 1000.f);
-        else if(left_dist > 0)
-          snprintf(str, sizeof(str), "%dm", left_dist);
+    nvgFontSize(s->vg, 86);
+    nvgFontFace(s->vg, "sans-bold");
+    nvgTextAlign(s->vg, NVG_ALIGN_CENTER | NVG_ALIGN_MIDDLE);
 
-        nvgText(s->vg, x+w/2, y+h, str, NULL);
-    }
+    if(left_dist >= 1000)
+      snprintf(str, sizeof(str), "%.1fkm", left_dist / 1000.f);
+    else if(left_dist > 0)
+      snprintf(str, sizeof(str), "%dm", left_dist);
+
+    nvgText(s->vg, x+w/2, y+h, str, NULL);
+  }
 }
 
 
