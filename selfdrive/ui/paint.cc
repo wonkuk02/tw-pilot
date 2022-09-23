@@ -2065,9 +2065,10 @@ static void ui_draw_speed_limit(UIState *s)
     const auto road_limit_speed = sm["roadLimitSpeed"].getRoadLimitSpeed();
 
     int activeNDA = road_limit_speed.getActive();
-    int roadLimitSpeed = road_limit_speed.getRoadLimitSpeed();
+
     int camLimitSpeed = road_limit_speed.getCamLimitSpeed();
     int camLimitSpeedLeftDist = road_limit_speed.getCamLimitSpeedLeftDist();
+
     int sectionLimitSpeed = road_limit_speed.getSectionLimitSpeed();
     int sectionLeftDist = road_limit_speed.getSectionLeftDist();
 
@@ -2137,16 +2138,6 @@ static void ui_draw_speed_limit(UIState *s)
           snprintf(str, sizeof(str), "%dm", left_dist);
 
         nvgText(s->vg, x+w/2, y+h, str, NULL);
-    }else if(roadLimitSpeed > 0 && roadLimitSpeed < 200) {
-      int w = 180;
-      int h = 180;
-      int x = (s->viz_rect.x + bdr_s + 400);
-      int y = 50;
-      char str[32];
-      nvgFontSize(s->vg, 75);
-      snprintf(str, sizeof(str), "%dSPEED\nLIMIT\n", roadLimitSpeed);
-      nvgText(s->vg, x+w/2, y+h, str, NULL);
-      nvgTextAlign(s->vg, NVG_ALIGN_CENTER | NVG_ALIGN_MIDDLE);
     }
 }
 
