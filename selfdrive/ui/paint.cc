@@ -1321,7 +1321,7 @@ static void ui_draw_measures(UIState *s){
 
           case UIMeasure::DESIRED_STEERING_ANGLE: 
             {
-            snprintf(name, sizeof(name), "Handle:Path");
+            snprintf(name, sizeof(name), "Handle:Path .");
             float angleSteers = scene.angleSteers > 0. ? scene.angleSteers : -scene.angleSteers;
             g = 255;
             b = 255;
@@ -1353,7 +1353,7 @@ static void ui_draw_measures(UIState *s){
 
           case UIMeasure::STEERING_ANGLE_ERROR: 
             {
-            snprintf(name, sizeof(name), "STR Diff");
+            snprintf(name, sizeof(name), "STR. Diff.");
             float angleSteers = scene.angleSteersErr > 0. ? scene.angleSteersErr : -scene.angleSteersErr;
             if (scene.controls_state.getEnabled()) {
               g = 255;
@@ -2059,15 +2059,15 @@ static void ui_draw_vision_speed(UIState *s) {
 
 static void ui_draw_speed_limit(UIState *s)
 {
-  const UIScene *scene = &s->scene;
   const SubMaster &sm = *(s->sm);
-  // cereal::CarControl::SccSmoother::Reader scc_smoother = scene->car_control.getSccSmoother();
+  const auto scc_smoother = sm["carControl"].getCarControl().getSccSmoother();
   const auto road_limit_speed = sm["roadLimitSpeed"].getRoadLimitSpeed();
 
-  int activeNDA = road_limit_speed.getActive();
+  int activeNDA = scc_smoother.getRoadLimitSpeedActive();
+  int roadLimitSpeed = road_limit_speed.getRoadLimitSpeed();
 
-  int camLimitSpeed = road_limit_speed.getCamLimitSpeed();
-  int camLimitSpeedLeftDist = road_limit_speed.getCamLimitSpeedLeftDist();
+  int camLimitSpeed = scc_smoother.getRoadLimitSpeed();
+  int camLimitSpeedLeftDist = scc_smoother.getRoadLimitSpeedLeftDist();
 
   int sectionLimitSpeed = road_limit_speed.getSectionLimitSpeed();
   int sectionLeftDist = road_limit_speed.getSectionLeftDist();
@@ -2789,7 +2789,7 @@ void ui_nvg_init(UIState *s) {
     {"lane_pos_left", "../assets/offroad/icon_lane_pos_left.png"},
     {"lane_pos_right", "../assets/offroad/icon_lane_pos_right.png"},
     {"img_nda", "../assets/img_nda.png"},
-    {"img_hda", "../assets/img_hda.png"}
+    {"img_hda", "../assets/img_hda.png"},
   };
   for (auto [name, file] : images) {
     s->images[name] = nvgCreateImage(s->vg, file, 1);

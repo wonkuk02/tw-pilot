@@ -187,7 +187,7 @@ class Controls:
     self.curve_speed_ms = 255.
 
     self.road_limit_speed = 0
-    self.road_limit_left_dist = 0
+    self.left_dist = 0
     self.sccStockCamStatus = 0
     self.sccStockCamAct = 0
     self.wide_camera = TICI and params.get_bool('EnableWideCamera')
@@ -525,7 +525,8 @@ class Controls:
 
     # limit_speed, self.road_limit_speed, self.road_limit_left_dist, first_started, limit_log = road_speed_limiter_get_max_speed(CS, self.v_cruise_kph)
     road_speed_limiter = get_road_speed_limiter()
-    apply_limit_speed, road_limit_speed, left_dist, first_started, limit_log = road_speed_limiter.get_max_speed(CS, self.v_cruise_kph)
+    apply_limit_speed, self.road_limit_speed, self.left_dist, first_started, limit_log = \
+       road_speed_limiter.get_max_speed(CS, self.v_cruise_kph)
 
     if apply_limit_speed > 20:
       self.v_cruise_kph_limit = min(apply_limit_speed, self.v_cruise_kph)
@@ -724,9 +725,9 @@ class Controls:
 
     CC.cruiseControl.override = True
     CC.cruiseControl.cancel = not self.CP.pcmCruise or (not self.enabled and CS.cruiseState.enabled)
-    # CC.sccSmoother.roadLimitSpeedActive = road_speed_limiter_get_active()
-    # CC.sccSmoother.roadLimitSpeed = self.road_limit_speed
-    # CC.sccSmoother.roadLimitSpeedLeftDist = self.road_limit_left_dist
+    CC.sccSmoother.roadLimitSpeedActive = road_speed_limiter_get_active()
+    CC.sccSmoother.roadLimitSpeed = self.road_limit_speed
+    CC.sccSmoother.roadLimitSpeedLeftDist = self.left_dist
     if self.joystick_mode and self.sm.rcv_frame['testJoystick'] > 0 and self.sm['testJoystick'].buttons[0]:
       CC.cruiseControl.cancel = True
 
