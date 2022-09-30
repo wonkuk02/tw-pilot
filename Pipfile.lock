@@ -795,7 +795,7 @@
                 "sha256:ff8d8fa42675249bb456f5db06c00de6c2f4c27a065955917b28c4f15978b9c3"
             ],
             "index": "pypi",
-            "version": "==3.20.1"
+            "version": "==3.20.2"
         },
         "psutil": {
             "hashes": [
