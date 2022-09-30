@@ -67,7 +67,7 @@ json-rpc = "*"
 libusb1 = "*"
 nose = "*"
 numpy = "*"
-protobuf = "==3.20.1"
+protobuf = "==3.20.2"
 onnx = "*"
 onnxruntime-gpu = {version = "*", markers="platform_system != 'Darwin'"}
 pillow = "*"
