@@ -6,7 +6,6 @@
   chmod 700 ./selfdrive/manager/custom_dep.py
   chmod 700 ./selfdrive/manager/manager.py
   chmod 700 ./selfdrive/debug/clear_dtc.py
-  chmod 700 ./scripts/oneplus_update_neos.sh
 
   sed -i -e 's/\r$//' ./*.sh
   sed -i -e 's/\r$//' ./selfdrive/*.py

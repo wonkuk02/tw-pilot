@@ -54,10 +54,6 @@ OFFROAD_DANGER_TEMP = 70.0
 
 prev_offroad_states: Dict[str, Tuple[bool, Optional[str]]] = {}
 
-LEON = False #is this EON GOLD what is Lepro3?
-last_eon_fan_val = None
-
-
 def read_tz(x):
   if x is None:
     return 0
@@ -79,42 +75,25 @@ def read_thermal(thermal_config):
 
 
 def setup_eon_fan():
-  global LEON
   os.system("echo 2 > /sys/module/dwc3_msm/parameters/otg_switch")
 
-  bus = SMBus(7, force=True)
-  try:
-    bus.write_byte_data(0x21, 0x10, 0xf)   # mask all interrupts
-    bus.write_byte_data(0x21, 0x03, 0x1)   # set drive current and global interrupt disable
-    bus.write_byte_data(0x21, 0x02, 0x2)   # needed?
-    bus.write_byte_data(0x21, 0x04, 0x4)   # manual override source
-  except IOError:
-    print("LEON detected")
-    LEON = True
-  bus.close()
 
+last_eon_fan_val = None
 def set_eon_fan(val):
-  global LEON, last_eon_fan_val
+  global last_eon_fan_val
 
   if last_eon_fan_val is None or last_eon_fan_val != val:
     bus = SMBus(7, force=True)
-    if LEON:
-      try:
-        i = [0x1, 0x3 | 0, 0x3 | 0x08, 0x3 | 0x10][val]
-        bus.write_i2c_block_data(0x3d, 0, [i])
-      except IOError:
+    try:
+      i = [0x1, 0x3 | 0, 0x3 | 0x08, 0x3 | 0x10][val]
+      bus.write_i2c_block_data(0x3d, 0, [i])
+    except IOError:
       # tusb320
-        if val == 0:
-          bus.write_i2c_block_data(0x67, 0xa, [0])
-          #bus.write_i2c_block_data(0x67, 0x45, [1<<2])
-        else:
-          #bus.write_i2c_block_data(0x67, 0x45, [0])
-          bus.write_i2c_block_data(0x67, 0xa, [0x20])
-          bus.write_i2c_block_data(0x67, 0x8, [(val - 1) << 6])
-    else:
-      bus.write_byte_data(0x21, 0x04, 0x2)
-      bus.write_byte_data(0x21, 0x03, (val*2)+1)
-      bus.write_byte_data(0x21, 0x04, 0x4)
+      if val == 0:
+        bus.write_i2c_block_data(0x67, 0xa, [0])
+      else:
+        bus.write_i2c_block_data(0x67, 0xa, [0x20])
+        bus.write_i2c_block_data(0x67, 0x8, [(val - 1) << 6])
     bus.close()
     last_eon_fan_val = val
 
@@ -423,7 +402,7 @@ def thermald_thread():
       set_offroad_alert_if_changed("Offroad_ConnectivityNeeded", False)
       set_offroad_alert_if_changed("Offroad_ConnectivityNeededPrompt", False)
 
-    #startup_conditions["up_to_date"] = params.get("Offroad_ConnectivityNeeded") is None or params.get("DisableUpdates") == b"1"
+    startup_conditions["up_to_date"] = params.get("Offroad_ConnectivityNeeded") is None or params.get_bool("DisableUpdates")
     startup_conditions["not_uninstalling"] = not params.get_bool("DoUninstall")
     startup_conditions["accepted_terms"] = params.get("HasAcceptedTerms") == terms_version
 
@@ -481,14 +460,14 @@ def thermald_thread():
     msg.deviceState.carBatteryCapacityUwh = max(0, power_monitor.get_car_battery_capacity())
 
     # Check if we need to disable charging (handled by boardd)
-    #msg.deviceState.chargingDisabled = power_monitor.should_disable_charging(pandaState, off_ts)
+    msg.deviceState.chargingDisabled = power_monitor.should_disable_charging(pandaState, off_ts)
 
     # Check if we need to shut down
-    #if power_monitor.should_shutdown(pandaState, off_ts, started_seen):
-    #  cloudlog.info(f"shutting device down, offroad since {off_ts}")
+    if power_monitor.should_shutdown(pandaState, off_ts, started_seen):
+      cloudlog.info(f"shutting device down, offroad since {off_ts}")
       # TODO: add function for blocking cloudlog instead of sleep
-    #  time.sleep(10)
-    #  HARDWARE.shutdown()
+      time.sleep(10)
+      HARDWARE.shutdown()
 
     # If UI has crashed, set the brightness to reasonable non-zero value
     manager_state = messaging.recv_one_or_none(managerState_sock)
@@ -517,16 +496,16 @@ def thermald_thread():
     startup_conditions_prev = startup_conditions.copy()
 
     # report to server once every 10 minutes
-    #if (count % int(600. / DT_TRML)) == 0:
-    #  if EON and started_ts is None and msg.deviceState.memoryUsagePercent > 40:
-    #    cloudlog.event("High offroad memory usage", mem=msg.deviceState.memoryUsagePercent)
+    if (count % int(600. / DT_TRML)) == 0:
+      if EON and started_ts is None and msg.deviceState.memoryUsagePercent > 40:
+        cloudlog.event("High offroad memory usage", mem=msg.deviceState.memoryUsagePercent)
 
-    #  location = messaging.recv_sock(location_sock)
-    #  cloudlog.event("STATUS_PACKET",
-    #                 count=count,
-    #                 pandaState=(strip_deprecated_keys(pandaState.to_dict()) if pandaState else None),
-    #                 location=(strip_deprecated_keys(location.gpsLocationExternal.to_dict()) if location else None),
-    #                 deviceState=strip_deprecated_keys(msg.to_dict()))
+      location = messaging.recv_sock(location_sock)
+      cloudlog.event("STATUS_PACKET",
+                     count=count,
+                     pandaState=(strip_deprecated_keys(pandaState.to_dict()) if pandaState else None),
+                     location=(strip_deprecated_keys(location.gpsLocationExternal.to_dict()) if location else None),
+                     deviceState=strip_deprecated_keys(msg.to_dict()))
 
     count += 1
 
