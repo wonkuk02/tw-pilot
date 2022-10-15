@@ -1010,7 +1010,7 @@ EVENTS: Dict[int, Dict[str, Union[Alert, Callable[[Any, messaging.SubMaster, boo
       "AutoHold Activated",
       "You can rest your foot now.",
       AlertStatus.normal, AlertSize.none,
-      Priority.LOWER, VisualAlert.none, AudibleAlert.chimeAutoHoldOn, 3., 0., 0.),
+      Priority.LOWER, VisualAlert.none, AudibleAlert.none, 3., 0., 0.),
   },
 
   EventName.stoppedWaitForGas: {
@@ -1046,6 +1046,6 @@ EVENTS: Dict[int, Dict[str, Union[Alert, Callable[[Any, messaging.SubMaster, boo
       "Slowing down",
       "",
       AlertStatus.normal, AlertSize.small,
-      Priority.MID, VisualAlert.none, AudibleAlert.chimeSlowingDownSpeed, 3., 0., 0.),
+      Priority.MID, VisualAlert.none, AudibleAlert.none, 3., 0., 0.),
   },
 }
